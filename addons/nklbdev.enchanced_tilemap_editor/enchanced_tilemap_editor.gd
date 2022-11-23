@@ -20,6 +20,8 @@ var _start_cell: Vector2 = Vector2.ZERO
 var _finish_cell: Vector2 = Vector2.ZERO
 var _original_tile_map_editor_plugin: EditorPlugin
 var _original_tile_map_editor: VBoxContainer
+var _original_toolbar: HBoxContainer
+var _original_toolbar_right: HBoxContainer
 var _canvas_item_editor: VBoxContainer
 var _canvas_item_editor_viewport: Viewport
 
@@ -45,14 +47,23 @@ func _input(event: InputEvent) -> void:
 
 var _select_tool_button: ToolButton
 func _enter_tree() -> void:
-	_original_tile_map_editor = _find_node_by_class(get_tree().root, "TileMapEditor")
-	_hang_canvas_item_visibility(_original_tile_map_editor, false)
 	_original_tile_map_editor_plugin = _get_child_by_class(get_parent(), "TileMapEditorPlugin")
-	_canvas_item_editor = _find_node_by_class(get_tree().root, "CanvasItemEditor")
+	_canvas_item_editor = _find_node_by_class(get_editor_interface().get_editor_viewport(), "CanvasItemEditor")
+	_original_tile_map_editor = _find_node_by_class(_canvas_item_editor, "TileMapEditor")
 	_canvas_item_editor_viewport = _find_node_by_class(_canvas_item_editor, "Viewport")
+	_select_tool_button = _get_child_by_class(_get_child_by_class(_get_child_by_class(_canvas_item_editor, "HFlowContainer"), "HBoxContainer"), "ToolButton")
+	
 	get_editor_interface().get_editor_settings().connect("settings_changed", self, "_update_grid_visibility")
 	_scan_editor_settings()
-	_select_tool_button = _get_child_by_class(_get_child_by_class(_get_child_by_class(_canvas_item_editor, "HFlowContainer"), "HBoxContainer"), "ToolButton")
+	
+	var collision_polygon_2d_editor = _find_node_by_class(_canvas_item_editor, "CollisionPolygon2DEditor") as Node
+	var context_menu_hbox = collision_polygon_2d_editor.get_parent() as HBoxContainer
+	_original_toolbar = context_menu_hbox.get_child(collision_polygon_2d_editor.get_position_in_parent() + 1) as HBoxContainer
+	_original_toolbar_right = context_menu_hbox.get_child(collision_polygon_2d_editor.get_position_in_parent() + 2) as HBoxContainer
+	
+	_hang_canvas_item_visibility(_original_tile_map_editor, false)
+	_hang_canvas_item_visibility(_original_toolbar, false)
+	_hang_canvas_item_visibility(_original_toolbar_right, false)
 
 func _print_path_pretty(node: Node) -> void:
 	var results = []
@@ -65,6 +76,8 @@ func _print_path_pretty(node: Node) -> void:
 	
 func _exit_tree() -> void:
 	_release_canvas_item_visibility(_original_tile_map_editor)
+	_release_canvas_item_visibility(_original_toolbar)
+	_release_canvas_item_visibility(_original_toolbar_right)
 
 func handles(object: Object) -> bool:
 	return object.is_class("TileMap")
@@ -229,7 +242,6 @@ func _draw_grid(viewport: Control, rect: Rect2) -> void:
 
 	var points: PoolVector2Array
 	var colors: PoolColorArray
-	print("clipped position: %s, size: %s" % [clipped.position, clipped.size])
 
 	# Vertical lines.
 	if _tile_map.cell_half_offset != TileMap.HALF_OFFSET_X and _tile_map.cell_half_offset != TileMap.HALF_OFFSET_NEGATIVE_X:
