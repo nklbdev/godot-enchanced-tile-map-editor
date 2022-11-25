@@ -58,6 +58,26 @@ enum SelectionActionType {
 	DELETE = 2
 }
 
+enum SelectionCombineOperationType {
+	REPLACEMENT = 0,
+	UNION = 1,
+	INTERSECTION = 2,
+	FORWARD_SUBTRACTION = 3,
+	BACKWARD_SUBTRACTION = 4
+}
+
+enum ShapeLayoutFlag { # FLAGS
+	SIMPLE = 0,
+	REGULAR = 1,
+	CENTERED = 2,
+}
+
+enum EventResultFlag { # FLAGS
+	NONE = 0
+	EVENT_CONSUMED = 1,
+	UPDATE_OVERLAYS = 2
+}
+
 class SelectionSettings:
 	const BORDER_COLOR: Color = Color(1, 0, 0, 1)
 	const FILL_COLOR: Color = Color(1, 0, 0, 0.5)

@@ -3,6 +3,8 @@ extends EditorPlugin
 
 const _plugin_folder = "res://addons/nklbdev.enchanced_tilemap_editor/"
 const Common = preload("res://addons/nklbdev.enchanced_tilemap_editor/common.gd")
+const RectSelectionPatternTool = preload("res://addons/nklbdev.enchanced_tilemap_editor/tools/pattern_tools/selection/rect.gd")
+const ShapeLayoutController = preload("res://addons/nklbdev.enchanced_tilemap_editor/shape_layout_controller.gd")
 
 var _tile_map: TileMap
 
@@ -11,6 +13,7 @@ var _original_tile_map_editor: VBoxContainer
 var _original_toolbar: HBoxContainer
 var _original_toolbar_right: HBoxContainer
 var _canvas_item_editor: VBoxContainer
+var _overlay: Control
 var _scene_viewport: Viewport
 var _select_tool_button: ToolButton
 var _context_menu_hbox: HBoxContainer
@@ -55,6 +58,7 @@ func _enter_tree() -> void:
 	_interface_display_scale = editor_interface.get_editor_scale()
 	_original_tile_map_editor_plugin = _get_child_by_class(get_parent(), "TileMapEditorPlugin")
 	_canvas_item_editor = _find_node_by_class(editor_interface.get_editor_viewport(), "CanvasItemEditor")
+	_overlay = _find_node_by_class(_canvas_item_editor, "CanvasItemEditorViewport")
 	_original_tile_map_editor = _find_node_by_class(_canvas_item_editor, "TileMapEditor")
 	_scene_viewport = _find_node_by_class(_canvas_item_editor, "Viewport")
 	_select_tool_button = _get_child_by_class(_get_child_by_class(_get_child_by_class(_canvas_item_editor, "HFlowContainer"), "HBoxContainer"), "ToolButton")
@@ -104,9 +108,8 @@ func edit(object: Object) -> void:
 		_pattern_selection = PatternSelection.new(_tile_map)
 		make_visible(true)
 	else:
-		if _pattern_selection != null:
-			_pattern_selection.free()
-			_pattern_selection = null
+		_pattern_selection = null
+		_tile_pattern_tool = null
 	update_overlays()
 
 func clear() -> void:
@@ -165,22 +168,29 @@ func forward_canvas_gui_input(event: InputEvent) -> bool:
 	if not _is_active():
 		return false
 	
-	var consumed = false
+	# ignore pressing mouse buttons outside the viewport
+	if event is InputEventMouseButton \
+		and event.pressed and \
+		not _overlay.get_rect().has_point(_overlay.get_local_mouse_position()):
+		return false
+	
+	var result = Common.EventResultFlag.NONE
 	if event is InputEventKey:
+		if event.echo:
+			return false
 		if event.pressed:
 			for shortcut_event in _buttons_by_shortcuts.keys():
 				if shortcut_event.shortcut_match(event):
 					_buttons_by_shortcuts.get(shortcut_event).emit_signal("pressed")
-					consumed = true
+					result |= Common.EventResultFlag.EVENT_CONSUMED
 	
+	if not result & Common.EventResultFlag.EVENT_CONSUMED and _tile_pattern_tool != null:
+		result |= _tile_pattern_tool.forward_canvas_gui_input(event)
 	
-	if not consumed and _tile_pattern_tool != null:
-		consumed = _tile_pattern_tool.forward_canvas_gui_input(event)
-	
-	if consumed:
+	if result & Common.EventResultFlag.UPDATE_OVERLAYS:
 		update_overlays()
 	
-	return consumed
+	return result & Common.EventResultFlag.EVENT_CONSUMED
 
 func forward_canvas_draw_over_viewport(overlay: Control) -> void:
 	if not _is_active():
@@ -266,8 +276,6 @@ func _create_toolbar() -> HBoxContainer:
 	toolbar.add_child(_create_tool_button(null, "", "_selection_action", [Common.SelectionActionType.DELETE], "Remove", KEY_DELETE))
 	return toolbar
 
-const a = preload("res://addons/nklbdev.enchanced_tilemap_editor/pattern_tool_selection_rect.gd")
-
 var _tile_pattern_tool: Object = null
 func _select_tool(tile_pattern_tool_type: int, clarification: int = -1) -> void:
 	if not _is_active():
@@ -277,7 +285,7 @@ func _select_tool(tile_pattern_tool_type: int, clarification: int = -1) -> void:
 		_tile_pattern_tool = null
 	match tile_pattern_tool_type:
 		Common.TilePatternToolType.SELECTION:
-			_tile_pattern_tool = a.new(_tile_map, _pattern_selection)
+			_tile_pattern_tool = RectSelectionPatternTool.new(_tile_map, _pattern_selection, ShapeLayoutController.new())
 		Common.TilePatternToolType.DRAWING:
 			pass
 		Common.TilePatternToolType.FILLING:
@@ -296,12 +304,17 @@ func _transform_pattern(transform_type: int) -> void:
 	print(_get_first_key_with_value(Common.TransformType, transform_type, "unknown transform type"))
 
 func _selection_action(selection_action_type: int) -> void:
-	if not _is_active():
+	if not _is_active() or _pattern_selection.empty():
 		return
 	print(_get_first_key_with_value(Common.SelectionActionType, selection_action_type, "unknown selection action type"))
 	match selection_action_type:
-		Common.SelectionActionType.COPY: pass
-		Common.SelectionActionType.CUT: pass
+		Common.SelectionActionType.COPY:
+			for cell in _pattern_selection.__cells.keys():
+				var tile_id = _tile_map.get_cellv(cell)
+				var tile_
+			pass
+		Common.SelectionActionType.CUT:
+			pass
 		Common.SelectionActionType.DELETE:
 			for y in range(_pattern_selection._rect.position.y, _pattern_selection._rect.end.y):
 				for x in range(_pattern_selection._rect.position.x, _pattern_selection._rect.end.x):
@@ -500,7 +513,7 @@ func _to_string_pretty(node: Node):
 
 func _print_path_pretty(node: Node) -> void:
 	var results = []
-	while node:
+	while node != null:
 		results.append(_to_string_pretty(node))
 		node = node.get_parent()
 	results.invert()

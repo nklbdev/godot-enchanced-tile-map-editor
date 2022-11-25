@@ -1,13 +1,10 @@
-extends "res://addons/nklbdev.enchanced_tilemap_editor/pattern_tool_base.gd"
-
+extends "res://addons/nklbdev.enchanced_tilemap_editor/tile_map_utility_base.gd"
 var __previous_mouse_position: Vector2
 var __dragging: bool = false
 var __dragging_button: int = 0
-var _pattern_selection = null
 
-func _init(tile_map: TileMap, pattern_selection).(tile_map):
+func _init(tile_map: TileMap).(tile_map):
 	__previous_mouse_position = _tile_map.get_local_mouse_position()
-	_pattern_selection = pattern_selection
 
 func _forward_canvas_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
@@ -36,14 +33,17 @@ func _forward_canvas_gui_input(event: InputEvent) -> void:
 			__dragging = true
 			_on_drag(mouse_position, relative, __dragging_button)
 		__previous_mouse_position = mouse_position
+	elif event is InputEventKey:
+		_on_key(event)
 
-func forward_canvas_draw_over_viewport(overlay: Control) -> void:
+func _forward_canvas_draw_over_viewport(overlay: Control) -> void:
 	pass
 
-func forward_canvas_force_draw_over_viewport(overlay: Control) -> void:
+func _forward_canvas_force_draw_over_viewport(overlay: Control) -> void:
 	pass
 
-
+func _on_key(event: InputEventKey) -> void:
+	pass
 
 func _on_mouse_button(position: Vector2, button: int, pressed: bool) -> void:
 	pass
@@ -68,3 +68,4 @@ func _on_finish_dragging(finish_position: Vector2, button: int, success: bool) -
 
 func _is_dragging() -> bool:
 	return __dragging
+
