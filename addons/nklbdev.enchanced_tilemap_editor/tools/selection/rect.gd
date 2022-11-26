@@ -1,14 +1,20 @@
-extends "res://addons/nklbdev.enchanced_tilemap_editor/tools/pattern_tools/selection/_base.gd"
+extends "_base.gd"
 
-var RectCellEnumerator = preload("res://addons/nklbdev.enchanced_tilemap_editor/cell_enumerators/rect.gd")
+const ShapeLayoutController = preload("../../shape_layout_controller.gd")
+var ShapeLayouts = Common.ShapeLayouts
+var SelectionSettings = Common.SelectionSettings
 
 var __selected_rect = null
 var __selection_arm = null
 var __shape_layout_controller
 
-func _init(tile_map: TileMap, pattern_selection, shape_layout_controller).(tile_map, pattern_selection):
-	__shape_layout_controller = shape_layout_controller
-	__shape_layout_controller.disabled = true
+func _init(editor: EditorPlugin, button_group: ButtonGroup).(editor) -> void:
+	control = _create_button(
+		button_group,
+		"Rectangle Selection",
+		editor.get_editor_interface().get_base_control().get_icon("ToolSelect", "EditorIcons"),
+		KEY_M)
+	__shape_layout_controller = ShapeLayoutController.new(editor)
 	add_subutility(__shape_layout_controller)
 	__shape_layout_controller.connect("shape_layout_changed", self, "__on_shape_layout_changed")
 
@@ -21,13 +27,16 @@ func _on_mouse_motion(position: Vector2, relative: Vector2, pressed_buttons: int
 	pass
 
 func _on_ready_to_drag(start_position: Vector2, button: int) -> void:
+	var tile_map = _editor.try_get_tile_map()
+	if not tile_map:
+		return
 	print("_on_ready_to_drag %s" % start_position)
 	match button:
 		BUTTON_LEFT: _start()
-		BUTTON_RIGHT: _start(Common.SelectionCombineOperationType.FORWARD_SUBTRACTION)
+		BUTTON_RIGHT: _start(Common.SelectionCombineOperations.FORWARD_SUBTRACTION)
 		_: return
-	__shape_layout_controller.disabled = false
-	__selection_arm = Rect2(_tile_map.world_to_map(start_position), Vector2.ZERO)
+	__shape_layout_controller.clear()
+	__selection_arm = Rect2(tile_map.world_to_map(start_position), Vector2.ZERO)
 	_consume_event()
 
 func _on_cancel_dragging(position: Vector2, button: int) -> void:
@@ -36,16 +45,22 @@ func _on_cancel_dragging(position: Vector2, button: int) -> void:
 	_on_finish_dragging(position, button, true)
 
 func _on_start_dragging(start_position: Vector2, button: int) -> void:
+	var tile_map = _editor.try_get_tile_map()
+	if not tile_map:
+		return
 	print("_on_start_dragging %s" % start_position)
 	if is_active():
-		__selection_arm = Rect2(_tile_map.world_to_map(start_position), Vector2.ZERO)
+		__selection_arm = Rect2(tile_map.world_to_map(start_position), Vector2.ZERO)
 		_consume_event()
 		_update_overlays()
 
 func _on_drag(position: Vector2, relative: Vector2, button: int) -> void:
+	var tile_map = _editor.try_get_tile_map()
+	if not tile_map:
+		return
 	print("_on_drag %s" % position)
 	if is_active():
-		__selection_arm.end = _tile_map.world_to_map(position)
+		__selection_arm.end = tile_map.world_to_map(position)
 		__update_selected_rect()
 		_consume_event()
 
@@ -55,8 +70,8 @@ func _on_finish_dragging(finish_position: Vector2, button: int, success: bool) -
 		if __selected_rect == null:
 			_finish(null)
 		else:
-			_finish(RectCellEnumerator.new(__selected_rect))
-		__shape_layout_controller.disabled = true
+			_finish(Common.RectCellEnumerator.new(__selected_rect))
+		__shape_layout_controller.clear()
 		__selection_arm = null
 		__selected_rect = null
 		_consume_event()
@@ -73,9 +88,9 @@ func __update_selected_rect() -> void:
 		var layout_flags = __shape_layout_controller.get_shape_layout_flags()
 		
 		new_selected_rect = __selection_arm
-		if layout_flags & Common.ShapeLayoutFlag.REGULAR:
+		if layout_flags & ShapeLayouts.REGULAR:
 			new_selected_rect.size = __keep_aspect(new_selected_rect.size)
-		if layout_flags & Common.ShapeLayoutFlag.CENTERED:
+		if layout_flags & ShapeLayouts.CENTERED:
 			new_selected_rect.position -= new_selected_rect.size
 			new_selected_rect.size *= 2
 
@@ -85,17 +100,21 @@ func __update_selected_rect() -> void:
 
 func __on_shape_layout_changed(shape_layout_flags: int) -> void:
 	print("_on_shape_layout_changed")
-	__update_selected_rect()
+	if is_active():
+		__update_selected_rect()
 
 func _forward_canvas_draw_over_viewport(overlay: Control) -> void:
 	if not is_active() or __selected_rect == null:
 		return
+	var tile_map = _editor.try_get_tile_map()
+	if not tile_map:
+		return
 	
-	var rect_to_draw = (_tile_map.get_viewport_transform() * _tile_map.get_global_transform()) \
-		.xform(rect_map_to_world(__selected_rect.abs().grow_individual(0, 0, 1, 1)))
+	var rect_to_draw = (tile_map.get_viewport_transform() * tile_map.get_global_transform()) \
+		.xform(Common.rect_map_to_world(__selected_rect.abs().grow_individual(0, 0, 1, 1), tile_map))
 	
-	overlay.draw_rect(rect_to_draw, Common.SelectionSettings.FILL_COLOR, true)
-	overlay.draw_rect(rect_to_draw, Common.SelectionSettings.BORDER_COLOR, false, Common.SelectionSettings.BORDER_WIDTH)
+	overlay.draw_rect(rect_to_draw, SelectionSettings.FILL_COLOR, true)
+	overlay.draw_rect(rect_to_draw, SelectionSettings.BORDER_COLOR, false, SelectionSettings.BORDER_WIDTH)
 
 func _forward_canvas_force_draw_over_viewport(overlay: Control) -> void:
 	pass

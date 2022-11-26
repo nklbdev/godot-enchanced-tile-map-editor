@@ -1,14 +1,16 @@
-extends "res://addons/nklbdev.enchanced_tilemap_editor/tools/pattern_tools/_base.gd"
-var __default_operation_type = Common.SelectionCombineOperationType.REPLACEMENT
+extends "../_base.gd"
+var CombineOperations = Common.SelectionCombineOperations
+var __default_operation_type = CombineOperations.REPLACEMENT
 
 signal operation_type_changed(previous_operation_type, current_operation_type)
 
-var __pattern_selection = null
 var __operation_type: int = __default_operation_type
 var __current_operation_type: int = -1
 
-func _init(tile_map: TileMap, pattern_selection).(tile_map):
-	__pattern_selection = pattern_selection
+func _init(editor: EditorPlugin).(editor) -> void: pass
+
+#func _init(editor, tile_map: TileMap, pattern_selection).(editor, tile_map):
+#	__pattern_selection = pattern_selection
 
 func _forward_canvas_draw_over_viewport(overlay: Control) -> void:
 	pass
@@ -21,11 +23,11 @@ func _on_key(event: InputEventKey) -> void:
 		return
 	if Input.is_key_pressed(KEY_SHIFT):
 		if Input.is_key_pressed(KEY_ALT):
-			__set_operation_type(Common.SelectionCombineOperationType.FORWARD_SUBTRACTION)
+			__set_operation_type(CombineOperations.FORWARD_SUBTRACTION)
 		elif Input.is_key_pressed(KEY_CONTROL):
-			__set_operation_type(Common.SelectionCombineOperationType.INTERSECTION)
+			__set_operation_type(CombineOperations.INTERSECTION)
 		else:
-			__set_operation_type(Common.SelectionCombineOperationType.UNION)
+			__set_operation_type(CombineOperations.UNION)
 	else: __set_operation_type(__default_operation_type)
 
 func _on_mouse_button(position: Vector2, button: int, pressed: bool) -> void:
@@ -57,7 +59,7 @@ func _start(override_operation_type = -1) -> void:
 func _finish(cell_enumerator) -> void:
 	if __current_operation_type >= 0:
 		if cell_enumerator:
-			__pattern_selection.combine(cell_enumerator, __current_operation_type)
+			_editor.pattern_selection.combine(cell_enumerator, __current_operation_type)
 		__set_current_operation_type(-1)
 		_consume_event()
 

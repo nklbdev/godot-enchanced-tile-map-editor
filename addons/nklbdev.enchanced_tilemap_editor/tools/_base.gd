@@ -1,14 +1,30 @@
-extends "res://addons/nklbdev.enchanced_tilemap_editor/tile_map_utility_base.gd"
+extends "../utility_base.gd"
 var __previous_mouse_position: Vector2
 var __dragging: bool = false
 var __dragging_button: int = 0
 
-func _init(tile_map: TileMap).(tile_map):
-	__previous_mouse_position = _tile_map.get_local_mouse_position()
+var control: Control
+
+func _init(editor: EditorPlugin).(editor) -> void:
+	var tile_map = _editor.try_get_tile_map()
+	if tile_map:
+		__previous_mouse_position = tile_map.get_local_mouse_position()
+
+func set_active(value: bool) -> void:
+	if value:
+		# TODO: prepare
+		_editor.current_tool = self
+	else:
+		# TODO: clear
+		pass
 
 func _forward_canvas_gui_input(event: InputEvent) -> void:
+	var tile_map = _editor.try_get_tile_map()
+	if not tile_map:
+		return
 	if event is InputEventMouseButton:
-		var mouse_position = _tile_map.get_local_mouse_position()
+		# TODO: except mouse wheel up, down, left and right
+		var mouse_position = tile_map.get_local_mouse_position()
 		_on_mouse_button(mouse_position, event.button_index, event.pressed)
 		if __dragging:
 			_on_finish_dragging(mouse_position, __dragging_button, not event.pressed)
@@ -23,7 +39,7 @@ func _forward_canvas_gui_input(event: InputEvent) -> void:
 				_on_cancel_dragging(mouse_position, __dragging_button)
 				__dragging_button = 0
 	elif event is InputEventMouseMotion:
-		var mouse_position = _tile_map.get_local_mouse_position()
+		var mouse_position = tile_map.get_local_mouse_position()
 		var relative = mouse_position - __previous_mouse_position
 		_on_mouse_motion(mouse_position, relative, event.button_mask)
 		if __dragging:
@@ -69,3 +85,9 @@ func _on_finish_dragging(finish_position: Vector2, button: int, success: bool) -
 func _is_dragging() -> bool:
 	return __dragging
 
+func _create_button(group: ButtonGroup, tooltip: String, icon: Texture, scancode_with_modifiers: int = 0) -> ToolButton:
+	var tool_button = Common.create_blank_button(tooltip, icon, scancode_with_modifiers)
+	tool_button.group = group
+	tool_button.toggle_mode = true
+	tool_button.connect("toggled", self, "set_active")
+	return tool_button

@@ -1,4 +1,4 @@
-extends "res://addons/nklbdev.enchanced_tilemap_editor/cell_enumerators/_base.gd"
+extends "_base.gd"
 
 var __rect: Rect2
 var __current: Vector2

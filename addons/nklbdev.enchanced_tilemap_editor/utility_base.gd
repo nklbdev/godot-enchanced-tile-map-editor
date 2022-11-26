@@ -1,25 +1,24 @@
 extends Object
-const Common = preload("res://addons/nklbdev.enchanced_tilemap_editor/common.gd")
+const Common = preload("common.gd")
 
 var __subutilities: Array = []
-var __result_flags: int
+var _editor: EditorPlugin
 
-func forward_canvas_gui_input(event: InputEvent) -> int:
-	__result_flags = __result_flags & Common.EventResultFlag.UPDATE_OVERLAYS
+func _init(editor: EditorPlugin) -> void:
+	_editor = editor
+
+func forward_canvas_gui_input(event: InputEvent) -> void:
 	_forward_canvas_gui_input(event)
 	for subutility in __subutilities:
-		__result_flags |= subutility.forward_canvas_gui_input(event)
-	return __result_flags
+		subutility.forward_canvas_gui_input(event)
 
 func _forward_canvas_gui_input(event: InputEvent) -> void:
 	pass
 
 func forward_canvas_draw_over_viewport(overlay: Control) -> void:
-	__result_flags &= Common.EventResultFlag.EVENT_CONSUMED
 	_forward_canvas_draw_over_viewport(overlay)
 
 func forward_canvas_force_draw_over_viewport(overlay: Control) -> void:
-	__result_flags &= Common.EventResultFlag.EVENT_CONSUMED
 	_forward_canvas_force_draw_over_viewport(overlay)
 
 func _forward_canvas_draw_over_viewport(overlay: Control) -> void:
@@ -29,10 +28,10 @@ func _forward_canvas_force_draw_over_viewport(overlay: Control) -> void:
 	pass
 
 func _consume_event() -> void:
-	__result_flags |= Common.EventResultFlag.EVENT_CONSUMED
+	_editor.consume_event()
 
 func _update_overlays() -> void:
-	__result_flags |= Common.EventResultFlag.UPDATE_OVERLAYS
+	_editor.update_overlays()
 
 func add_subutility(utility: Object) -> void:
 	if utility and not (utility in __subutilities):

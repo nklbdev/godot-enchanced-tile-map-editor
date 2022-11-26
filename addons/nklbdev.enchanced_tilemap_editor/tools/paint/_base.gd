@@ -1,9 +1,11 @@
-extends "res://addons/nklbdev.enchanced_tilemap_editor/tools/pattern_tools/_base.gd"
+extends "../_base.gd"
 
 var __pattern_selection = null
 
-func _init(tile_map: TileMap, pattern_selection).(tile_map):
-	__pattern_selection = pattern_selection
+func _init(editor: EditorPlugin).(editor) -> void: pass
+
+#func _init(editor, tile_map: TileMap, pattern_selection).(editor, tile_map):
+#	__pattern_selection = pattern_selection
 
 func _forward_canvas_draw_over_viewport(overlay: Control) -> void:
 	pass
@@ -15,11 +17,11 @@ func _on_key(event: InputEventKey) -> void:
 #	if event.echo:
 #		return
 #	if is_active():
-#		var shape_layout_flags = ShapeLayoutFlag.SIMPLE
+#		var shape_layout_flags = ShapeLayouts.SIMPLE
 #		if Input.is_key_pressed(KEY_SHIFT):
-#			shape_layout_flags |= ShapeLayoutFlag.REGULAR
+#			shape_layout_flags |= ShapeLayouts.REGULAR
 #		if Input.is_key_pressed(KEY_CONTROL):
-#			shape_layout_flags |= ShapeLayoutFlag.CENTERED
+#			shape_layout_flags |= ShapeLayouts.CENTERED
 #		set_shape_layout_flags(shape_layout_flags)
 #	else:
 #		if Input.is_key_pressed(KEY_SHIFT):

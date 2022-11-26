@@ -1,24 +1,24 @@
-extends "res://addons/nklbdev.enchanced_tilemap_editor/utility_base.gd"
+extends "utility_base.gd"
 
 signal shape_layout_changed(shape_layout_flags)
 
-var __shape_layout_flags = Common.ShapeLayoutFlag.SIMPLE
+var ShapeLayouts = Common.ShapeLayouts
+var __shape_layout_flags = ShapeLayouts.SIMPLE
 var __sleeping: bool
 
-var disabled: bool = false setget __set_disabled
-func __set_disabled(value: bool) -> void:
-	if value != disabled:
-		disabled = value
-		if disabled:
-			__sleeping = true
+func _init(editor: EditorPlugin).(editor) -> void: pass
 
-#func __scan() -> void:
-#	var shape_layout_flags = Common.ShapeLayoutFlag.SIMPLE
-#	if Input.is_key_pressed(KEY_SHIFT):
-#		shape_layout_flags |= Common.ShapeLayoutFlag.REGULAR
-#	if Input.is_key_pressed(KEY_CONTROL):
-#		shape_layout_flags |= Common.ShapeLayoutFlag.CENTERED
-#	set_shape_layout_flags(shape_layout_flags)
+#var disabled: bool = false setget __set_disabled
+#func __set_disabled(value: bool) -> void:
+#	if value != disabled:
+#		disabled = value
+#		if disabled:
+#			set_shape_layout_flags(ShapeLayouts.SIMPLE)
+#			__sleeping = true
+
+func clear() -> void:
+	set_shape_layout_flags(ShapeLayouts.SIMPLE)
+	__sleeping = true
 
 func _forward_canvas_gui_input(event: InputEvent) -> void:
 	if event is InputEventKey:
@@ -31,23 +31,17 @@ func _forward_canvas_gui_input(event: InputEvent) -> void:
 			else:
 				return
 		
+		var previous_shape_layout_flags = __shape_layout_flags
 		match event.scancode:
-			KEY_SHIFT: __shape_layout_flags = \
-				(__shape_layout_flags | Common.ShapeLayoutFlag.REGULAR) \
+			KEY_SHIFT: set_shape_layout_flags(
+				(__shape_layout_flags | ShapeLayouts.REGULAR) \
 				if event.pressed else \
-				(__shape_layout_flags & Common.ShapeLayoutFlag.CENTERED)
-			KEY_CONTROL: __shape_layout_flags = \
-				(__shape_layout_flags | Common.ShapeLayoutFlag.CENTERED) \
+				(__shape_layout_flags & ShapeLayouts.CENTERED))
+			KEY_CONTROL: set_shape_layout_flags(
+				(__shape_layout_flags | ShapeLayouts.CENTERED) \
 				if event.pressed else \
-				(__shape_layout_flags & Common.ShapeLayoutFlag.REGULAR)
+				(__shape_layout_flags & ShapeLayouts.REGULAR))
 				
-#		elif event.scan
-#			if event.pressed and event.scancode
-#			# игнорировать все отпускания до первого нажатия
-#			pass
-#		if not disabled and event is InputEventKey and not event.echo:
-#			__scan()
-
 func get_shape_layout_flags() -> int:
 	return __shape_layout_flags
 
