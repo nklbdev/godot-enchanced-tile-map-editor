@@ -10,9 +10,6 @@ func _init(rect: Rect2) -> void:
 	__rect.end = abs_rect.end.floor()
 	_iter_init(false)
 
-func _should_continue() -> bool:
-	return __current.x < __rect.end.x or __current.y < __rect.end.y
-
 func _iter_init(arg) -> bool:
 	__current = __rect.position
 	return true

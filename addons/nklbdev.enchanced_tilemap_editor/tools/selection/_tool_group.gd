@@ -1,17 +1,16 @@
 extends "../tool_group_base.gd"
 
-const RectSelection = preload("rect.gd")
-const LassoSelection = preload("lasso.gd")
-const PolygonSelection = preload("polygon.gd")
-const ContinousSelection = preload("continous.gd")
-const SameSelection = preload("same.gd")
+const __tool_classes: Array = [
+	preload("rectangle.gd"),
+	preload("lasso.gd"),
+	preload("polygon.gd"),
+	preload("continous.gd"),
+	preload("same.gd")
+]
 
 func _init(editor: EditorPlugin).(editor) -> void:
-	name = "Selection"
-	
+	name = "SelectionTools"
+
 	var button_group = ButtonGroup.new()
-	_add_tool(RectSelection.new(_editor, button_group))
-	_add_tool(LassoSelection.new(_editor, button_group))
-	_add_tool(PolygonSelection.new(_editor, button_group))
-	_add_tool(ContinousSelection.new(_editor, button_group))
-	_add_tool(SameSelection.new(_editor, button_group))
+	for tool_class in __tool_classes:
+		_add_tool(tool_class.new(_editor, button_group))

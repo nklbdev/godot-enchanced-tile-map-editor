@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   height="64"
+   viewBox="0 0 64 64"
+   width="64"
+   version="1.1"
+   id="svg6"
+   sodipodi:docname="reset_scaling.svg"
+   inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs10" />
+  <sodipodi:namedview
+     id="namedview8"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="8.0234375"
+     inkscape:cx="1.1840312"
+     inkscape:cy="35.583252"
+     inkscape:window-width="2560"
+     inkscape:window-height="1361"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg6" />
+  <path
+     id="path378"
+     d="M 4,4 H 60 V 60 H 4 Z M 4,0 C 1.790861,0 0,1.790861 0,4 v 56 c 0,2.20914 1.790861,4 4,4 h 56 c 2.20914,0 4,-1.79086 4,-4 V 4 C 64,1.790861 62.20914,0 60,0 Z"
+     style="fill:#e0e0e0;fill-opacity:0.996078;stroke-width:4"
+     sodipodi:nodetypes="cccccsssssssss" />
+  <path
+     id="path378-9"
+     d="M 8,8 H 52 V 44 H 8 Z M 8,4 C 5.7908612,4 4,5.7908612 4,8 v 36 c 0,2.20914 1.7908612,4 4,4 h 44 c 2.20914,0 4,-1.79086 4,-4 V 8 C 56,5.7908612 54.20914,4 52,4 Z"
+     style="fill:#e0e0e0;fill-opacity:0.996078;stroke-width:4"
+     sodipodi:nodetypes="cccccsssssssss" />
+  <path
+     d="M 36,12 H 12 v 24 z"
+     id="path380"
+     style="fill:#e0e0e0;fill-opacity:0.996078;stroke-width:5.65688" />
+  <rect
+     style="fill:#e0e0e0;fill-opacity:0.996078;stroke:none;stroke-width:5.65685"
+     id="rect490"
+     width="33.941124"
+     height="11.313707"
+     x="22.627419"
+     y="-5.6568542"
+     transform="rotate(45.000001)" />
+</svg>

@@ -2,9 +2,9 @@ tool
 extends EditorPlugin
 
 const Common = preload("common.gd")
-const RectSelectionPatternTool = preload("tools/selection/rect.gd")
+const RectSelectionPatternTool = preload("tools/selection/rectangle.gd")
 const ShapeLayoutController = preload("shape_layout_controller.gd")
-const PatternSelection = preload("pattern_selection.gd")
+const PatternSelection = preload("selection/pattern_selection.gd")
 const ToolBar = preload("tool_bar.gd")
 const CanvasItemVisibilityController = preload("canvas_item_visibility_controller.gd")
 const ToolBase = preload("tools/_base.gd")
@@ -36,60 +36,40 @@ var __is_event_consumed: bool
 ##########################################
 #           OVERRIDEN METHODS            #
 ##########################################
-var __log: File
+
+func _init():
+	name = "EnchancedTileMapEditorPlugin"
+
 func _enter_tree() -> void:
-	__log = File.new()
-	__log.open("C:/Data/Godot/_log.txt", File.WRITE)
-	print("_enter_tree")
+	Common.print_log("_enter_tree")
 	var editor_interface = get_editor_interface()
-	print("1")
 
 	__editor_settings = editor_interface.get_editor_settings()
-	print("2")
 	__editor_settings.connect("settings_changed", self, "__scan_editor_settings")
-	print("3")
 	__scan_editor_settings()
-	print("4")
 
 	var canvas_item_editor = Common.find_node_by_class(editor_interface.get_editor_viewport(), "CanvasItemEditor") as Node
-	print("5")
 	__select_tool_button = Common.get_child_by_class(Common.get_child_by_class(Common.get_child_by_class(canvas_item_editor, "HFlowContainer"), "HBoxContainer"), "ToolButton") as ToolButton
-	print("6")
 	__overlay = Common.find_node_by_class(canvas_item_editor, "CanvasItemEditorViewport") as Control
-	print("7")
 
 	var collision_polygon_2d_editor = Common.find_node_by_class(canvas_item_editor, "CollisionPolygon2DEditor") as Node
-	print("8")
 	var context_menu_hbox = collision_polygon_2d_editor.get_parent() as HBoxContainer
-	print("9")
 	__original_tile_map_editor_plugin = Common.get_child_by_class(get_parent(), "TileMapEditorPlugin") as EditorPlugin
-	print("10")
 	__original_tile_map_editor = Common.find_node_by_class(canvas_item_editor, "TileMapEditor") as VBoxContainer
-	print("11")
 	__original_toolbar = context_menu_hbox.get_child(collision_polygon_2d_editor.get_position_in_parent() + 1) as HBoxContainer
-	print("12")
 	__original_toolbar_right = context_menu_hbox.get_child(collision_polygon_2d_editor.get_position_in_parent() + 2) as HBoxContainer
-	print("13")
 	
 	__canvas_item_visibility_controller = CanvasItemVisibilityController.new()
-	print("14")
 	__canvas_item_visibility_controller.hang_visibility(__original_tile_map_editor, false)
-	print("15")
 	__canvas_item_visibility_controller.hang_visibility(__original_toolbar, false)
-	print("16")
 	__canvas_item_visibility_controller.hang_visibility(__original_toolbar_right, false)
-	print("17")
 	
 	__tool_bar = ToolBar.new(self)
-	print("18")
-	print("__tool_bar: %s" % Common.to_string_pretty(__tool_bar))
-	print("__tool_bar.visible: %s" % __tool_bar)
 	context_menu_hbox.add_child(__tool_bar)
-	print("19")
 	__tool_bar.hide()
 
 func _exit_tree() -> void:
-	print("_exit_tree")
+	Common.print_log("_exit_tree")
 	__canvas_item_visibility_controller.release_visibility(__original_tile_map_editor)
 	__canvas_item_visibility_controller.release_visibility(__original_toolbar)
 	__canvas_item_visibility_controller.release_visibility(__original_toolbar_right)
@@ -99,23 +79,23 @@ func _exit_tree() -> void:
 	__tool_bar = null
 
 func handles(object: Object) -> bool:
-	print("handles")
+	Common.print_log("handles")
 	return object is TileMap and is_instance_valid(object)
 
 func make_visible(visible: bool) -> void:
-#	return
-	print("make_visible(%s)" % [visible])
+	Common.print_log("make_visible(%s)" % [visible])
 	if __tool_bar.visible == visible:
 		return
 	if not __is_active():
 		return
+	Common.print_log("set toolbar visibility: %s" % visible)
+	Common.print_log("context_menu_hbox.visible: %s" % __tool_bar.get_parent().visible)
 	__tool_bar.visible = visible
 	if not visible:
 		edit(null)
 
 func edit(object: Object) -> void:
-#	return
-	print("edit")
+	Common.print_log("edit")
 	if __tile_map_ref != null:
 		var tile_map: TileMap = __tile_map_ref.get_ref()
 		if tile_map:
@@ -140,60 +120,60 @@ func edit(object: Object) -> void:
 	update_overlays()
 
 func clear() -> void:
-	print("clear")
+	Common.print_log("clear")
 	make_visible(false)
 
 func apply_changes() -> void:
-	print("apply_changes")
+	Common.print_log("apply_changes")
 	pass
 
 func build() -> bool:
-	print("build")
+	Common.print_log("build")
 	return true
 
 func enable_plugin() -> void:
-	print("enable_plugin")
+	Common.print_log("enable_plugin")
 	pass
 
 func disable_plugin() -> void:
-	print("disable_plugin")
+	Common.print_log("disable_plugin")
 	pass
 
 func get_plugin_icon() -> Texture:
-	print("get_plugin_icon")
+	Common.print_log("get_plugin_icon")
 	return null
 
 func get_plugin_name() -> String:
-	print("get_plugin_name")
+	Common.print_log("get_plugin_name")
 	return "Enchanced TileMap Editor"
 
 func get_state() -> Dictionary:
-	print("get_state")
+	Common.print_log("get_state")
 	return {}
 
 func set_state(state: Dictionary) -> void:
-	print("set_state")
+	Common.print_log("set_state")
 	pass
 
 func get_window_layout(layout: ConfigFile) -> void:
-	print("get_window_layout")
+	Common.print_log("get_window_layout")
 	pass
 
 func set_window_layout(layout: ConfigFile) -> void:
-	print("set_window_layout")
+	Common.print_log("set_window_layout")
 	pass
 
 func has_main_screen() -> bool:
-	print("has_main_screen")
+	Common.print_log("has_main_screen")
 	return false
 
 func save_external_data() -> void:
-	print("save_external_data")
+	Common.print_log("save_external_data")
 	pass
 
 func forward_canvas_gui_input(event: InputEvent) -> bool:
 	if event is InputEventMouseButton:
-		print("InputEventMouseButton button: %s, pressed: %s, position: %s" % [event.button_index, event.pressed, event.position])
+		Common.print_log("InputEventMouseButton button: %s, pressed: %s, position: %s" % [event.button_index, event.pressed, event.position])
 
 	__is_event_consumed = false
 	if not __is_active():
@@ -237,33 +217,15 @@ func forward_canvas_force_draw_over_viewport(overlay: Control) -> void:
 #            PUBLIC METHODS              #
 ##########################################
 
-#func get_icon(icon_name: String, theme_type: String = "") -> Texture:
-#	return __original_tile_map_editor.get_icon(icon_name, theme_type)
-#
-#func has_icon(icon_name: String, theme_type: String = "") -> bool:
-#	return __original_tile_map_editor.has_icon(icon_name, theme_type)
-#
 func try_get_tile_map() -> TileMap:
-	__log.store_line("start try_get_tile_map")
 	if __tile_map_ref != null:
 		var tile_map = __tile_map_ref.get_ref()
 		if tile_map:
-			__log.store_line("try_get_tile_map returns tilemap")
 			return tile_map
 		__tile_map_ref = null
-		__log.store_line("try_get_tile_map performs edit(null)")
 		edit(null)
-	__log.store_line("try_get_tile_map returns null")
 	return null
 	
-#	if __tile_map_ref != null:
-#		var tile_map = __tile_map_ref.get_ref()
-#		if tile_map:
-#			return tile_map
-#		__tile_map_ref = null
-#	edit(null)
-#	return null
-
 func consume_event() -> void:
 	__is_event_consumed = true
 
@@ -272,9 +234,7 @@ func consume_event() -> void:
 ##########################################
 
 func __is_active() -> bool:
-	var result = __select_tool_button.pressed and try_get_tile_map()
-#	print("__is_active() -> %s ---- %s" % [result, __select_tool_button.pressed])
-	return result
+	return __select_tool_button.pressed and try_get_tile_map()
 
 func __set_current_tool(value: ToolBase) -> void:
 	if current_tool == value:

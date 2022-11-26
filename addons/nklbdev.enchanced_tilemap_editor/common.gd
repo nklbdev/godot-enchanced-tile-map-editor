@@ -61,7 +61,7 @@ class SelectionSettings:
 	const FILL_COLOR: Color = Color(1, 0, 0, 0.5)
 	const BORDER_WIDTH: float = 2.0
 
-const RectCellEnumerator = preload("cell_enumerators/rect.gd")
+const RectangleCellEnumerator = preload("cell_enumerators/rectangle.gd")
 
 static func create_blank_button(tooltip: String, icon: Texture, scancode_with_modifiers: int = 0):
 	var tool_button = ToolButton.new()
@@ -168,3 +168,9 @@ static func rect_map_to_world(rect: Rect2, tile_map: TileMap) -> Rect2:
 	result.position = tile_map.map_to_world(rect.position)
 	result.end = tile_map.map_to_world(rect.end)
 	return result
+
+const PRINT_LOG: bool = false
+static func print_log(arg) -> void:
+	if PRINT_LOG:
+		print(arg)
+	

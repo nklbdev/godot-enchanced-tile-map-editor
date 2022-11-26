@@ -1,4 +1,4 @@
-extends "../utility_base.gd"
+extends "../../utility_base.gd"
 
 func perform() -> void:
 	pass

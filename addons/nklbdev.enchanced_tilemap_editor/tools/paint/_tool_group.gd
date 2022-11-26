@@ -1,17 +1,18 @@
 extends "../tool_group_base.gd"
 
-#const RectSelection = preload("res://addons/nklbdev.enchanced_tilemap_editor/tools/pattern_tools/selection/rect.gd")
-#const LassoSelection = preload("res://addons/nklbdev.enchanced_tilemap_editor/tools/pattern_tools/selection/lasso.gd")
-#const PolygonSelection = preload("res://addons/nklbdev.enchanced_tilemap_editor/tools/pattern_tools/selection/polygon.gd")
-#const ContinousSelection = preload("res://addons/nklbdev.enchanced_tilemap_editor/tools/pattern_tools/selection/continous.gd")
-#const SameSelection = preload("res://addons/nklbdev.enchanced_tilemap_editor/tools/pattern_tools/selection/same.gd")
+const __tool_classes: Array = [
+	preload("brush.gd"),
+	preload("line.gd"),
+	preload("contour.gd"),
+	preload("polygon.gd"),
+	preload("rectangle.gd"),
+	preload("bucket.gd"),
+	preload("eraser.gd")
+]
 
 func _init(editor: EditorPlugin).(editor) -> void:
-	name = "Paint"
-	
-#	__add_tool(RectSelection.new())
-#	__add_tool(LassoSelection.new())
-#	__add_tool(PolygonSelection.new())
-#	__add_tool(ContinousSelection.new())
-#	__add_tool(SameSelection.new())
+	name = "PaintTools"
 
+	var button_group: ButtonGroup = ButtonGroup.new()
+	for tool_class in __tool_classes:
+		_add_tool(tool_class.new(editor, button_group))
