@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-   height="64"
-   viewBox="0 0 64 64"
-   width="64"
+   height="16"
+   viewBox="0 0 16 16"
+   width="16"
    version="1.1"
    id="svg6"
-   sodipodi:docname="reset_scaling.svg"
+   sodipodi:docname="_dummy.svg"
    inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -23,9 +23,9 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      showgrid="false"
-     inkscape:zoom="8.0234375"
-     inkscape:cx="1.1840312"
-     inkscape:cy="35.583252"
+     inkscape:zoom="45.387416"
+     inkscape:cx="13.032247"
+     inkscape:cy="11.379806"
      inkscape:window-width="2560"
      inkscape:window-height="1361"
      inkscape:window-x="-9"
@@ -34,24 +34,24 @@
      inkscape:current-layer="svg6" />
   <path
      id="path378"
-     d="M 4,4 H 60 V 60 H 4 Z M 4,0 C 1.790861,0 0,1.790861 0,4 v 56 c 0,2.20914 1.790861,4 4,4 h 56 c 2.20914,0 4,-1.79086 4,-4 V 4 C 64,1.790861 62.20914,0 60,0 Z"
-     style="fill:#e0e0e0;fill-opacity:0.996078;stroke-width:4"
+     d="M 1,1 H 15 V 15 H 1 Z M 1,0 C 0.44771525,0 0,0.44771525 0,1 v 14 c 0,0.552285 0.44771525,1 1,1 h 14 c 0.552285,0 1,-0.447715 1,-1 V 1 C 16,0.44771525 15.552285,0 15,0 Z"
+     style="fill:#e0e0e0;fill-opacity:0.996078;stroke-width:1"
      sodipodi:nodetypes="cccccsssssssss" />
   <path
      id="path378-9"
-     d="M 8,8 H 52 V 44 H 8 Z M 8,4 C 5.7908612,4 4,5.7908612 4,8 v 36 c 0,2.20914 1.7908612,4 4,4 h 44 c 2.20914,0 4,-1.79086 4,-4 V 8 C 56,5.7908612 54.20914,4 52,4 Z"
-     style="fill:#e0e0e0;fill-opacity:0.996078;stroke-width:4"
+     d="m 2,2 h 11 v 9 H 2 Z M 2,1 C 1.4477153,1 1,1.4477153 1,2 v 9 c 0,0.552285 0.4477153,1 1,1 h 11 c 0.552285,0 1,-0.447715 1,-1 V 2 C 14,1.4477153 13.552285,1 13,1 Z"
+     style="fill:#e0e0e0;fill-opacity:0.996078;stroke-width:1"
      sodipodi:nodetypes="cccccsssssssss" />
   <path
-     d="M 36,12 H 12 v 24 z"
+     d="M 9,3 H 3 v 6 z"
      id="path380"
-     style="fill:#e0e0e0;fill-opacity:0.996078;stroke-width:5.65688" />
+     style="fill:#e0e0e0;fill-opacity:0.996078;stroke-width:1.41422" />
   <rect
-     style="fill:#e0e0e0;fill-opacity:0.996078;stroke:none;stroke-width:5.65685"
+     style="fill:#e0e0e0;fill-opacity:0.996078;stroke:none;stroke-width:1.41421"
      id="rect490"
-     width="33.941124"
-     height="11.313707"
-     x="22.627419"
-     y="-5.6568542"
+     width="8.485281"
+     height="2.8284268"
+     x="5.6568546"
+     y="-1.4142135"
      transform="rotate(45.000001)" />
 </svg>

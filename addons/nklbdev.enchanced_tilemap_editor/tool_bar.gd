@@ -1,22 +1,170 @@
 extends HBoxContainer
 
-const __tool_group_classes: Array = [
-	preload("tools/selection/_tool_group.gd"),
-	preload("tools/paint/_tool_group.gd")
-]
+const TreeBuilder = preload("tree_builder.gd")
 
-var __tool_groups: Array
+const Common         = preload("common.gd")
+const Selection      = preload("selection.gd")
+const Paper          = preload("paper.gd")
 
-func _init(editor: EditorPlugin) -> void:
+# Instruments
+const Instrument     = preload("instruments/_base.gd")
+const InstrumentFreehand = preload("instruments/freehand.gd")
+const InstrumentLine     = preload("instruments/line.gd")
+const InstrumentRectangle     = preload("instruments/rectangle.gd")
+const InstrumentFlood     = preload("instruments/flood.gd")
+const InstrumentSame     = preload("instruments/same.gd")
+
+# Brushes
+const BrushSelection    = preload("brushes/selection.gd")
+const BrushPattern    = preload("brushes/pattern.gd")
+const BrushAutotile    = preload("brushes/autotile.gd")
+const BrushTerrain    = preload("brushes/terrain.gd")
+
+const __key_mode_map: Dictionary = {
+	KEY_SHIFT: Common.InstrumentMode.MODE_A,
+	KEY_CONTROL: Common.InstrumentMode.MODE_B,
+	KEY_ALT: Common.InstrumentMode.MODE_C
+}
+
+const __button_map: Dictionary = {
+	BUTTON_LEFT: Common.PatternType.FOREGROUND,
+	BUTTON_RIGHT: Common.PatternType.BACKGROUND,
+}
+
+var __visual_overlay: Node2D
+var __button_group: ButtonGroup
+var __previous_visibility: bool
+var __default_instrument_tool_button: ToolButton
+var __last_instrument_tool_button: ToolButton
+var __editor_scale: float = 1
+var __cell_type_option_button: OptionButton
+
+signal instruments_taken(left_handle, right_handle)
+signal instruments_dropped(left_handle, right_handle)
+signal cell_type_selected(cell_type)
+
+
+
+func _init(visual_overlay: Node2D, selection: Selection, drawing_settings: Common.DrawingSettings, editor_scale: float = 1) -> void:
+	visible = false
+	__editor_scale = editor_scale
+	__previous_visibility = false
+	__visual_overlay = visual_overlay
+	__button_group = ButtonGroup.new()
 	name = "EnchancedTileMapEditorToolBar"
-	var first: bool = true
-	for tool_group_class in __tool_group_classes:
-		if first: first = false
-		else: add_child(VSeparator.new())
-		var tool_group = tool_group_class.new(editor)
-		__tool_groups.append(tool_group)
-		add_child(tool_group)
+	var ds: Common.DrawingSettings = drawing_settings
+	
+	var paint_pattern_holder = Common.ValueHolder.new()
+	paint_pattern_holder.value = Common.Pattern.new(Vector2.ONE * 3, [
+		0, 0, 2, 2,    0, 0, 3, 1,    0, 0, 3, 2,
+		
+		0, 0, 2, 1,    0, 0, 0, 0,    0, 0, 0, 1,
+		
+		0, 0, 1, 2,    0, 0, 1, 1,    0, 0, 0, 2,
+	])
+	print("CHECK DATA")
+	print(paint_pattern_holder.value.get_map_cell_data(Vector2(0, 0)))
+	print(paint_pattern_holder.value.get_map_cell_data(Vector2(1, 0)))
+	print(paint_pattern_holder.value.get_map_cell_data(Vector2(2, 0)))
+	print(paint_pattern_holder.value.get_map_cell_data(Vector2(3, 0)))
+	print(paint_pattern_holder.value.get_map_cell_data(Vector2(4, 0)))
+	
+	var erase_pattern_holder = Common.ValueHolder.new()
+	erase_pattern_holder.value = Common.Pattern.new(Vector2.ONE, [-1, 0, 0, 0])
 
-func forward_canvas_gui_input(event: InputEvent) -> void:
-	for tool_group in __tool_groups:
-		tool_group.forward_canvas_gui_input(event)
+	__default_instrument_tool_button = __create_instrument_tool_button("Brush",     KEY_B,                  preload("icons/paint_tool_brush.svg"),     InstrumentFreehand.new(BrushPattern.new(paint_pattern_holder, ds), ds), InstrumentFreehand.new(BrushPattern.new(paint_pattern_holder, ds), ds))
+	add_child(__create_instrument_tool_buttons_group("SelectionTools", [
+#		__create_instrument_tool_button("Rectangle Selection", KEY_M,                  preload("icons/selection_tool_rectangle.svg"), HandlePair.new(__paper, TipRectangle.new())),
+#		__create_instrument_tool_button("Lasso Selection",     KEY_Q,                  preload("icons/selection_tool_lasso.svg"),     HandleFreehand.new(__paper, TipPoly.new())),
+#		__create_instrument_tool_button("Polygon Selection",   KEY_MASK_SHIFT | KEY_Q, preload("icons/selection_tool_polygon.svg"),   HandlePoly.new(__paper, TipPoly.new())),
+#		__create_instrument_tool_button("Continous Selection", KEY_W,                  preload("icons/selection_tool_continous.svg"), HandleSingle.new(__paper, TipFlood.new())),
+#		__create_instrument_tool_button("Same selection",      KEY_MASK_SHIFT | KEY_W, preload("icons/selection_tool_same.svg"),      HandleSingle.new(__paper, TipSame.new())),
+	]))
+	add_spacer(false)
+	add_child(__create_instrument_tool_buttons_group("PaintTools", [
+		__default_instrument_tool_button,
+#		__create_instrument_tool_button("Bucket",    KEY_G,                  preload("icons/paint_tool_bucket.svg"),    HandleSingle.new(__paper, TipFlood.new())),
+#		__create_instrument_tool_button("Contour",   KEY_D,                  preload("icons/paint_tool_contour.svg"),   HandleFreehand.new(__paper, TipPoly.new())),
+		__create_instrument_tool_button("Eraser",    KEY_E,                  preload("icons/paint_tool_eraser.svg"),    InstrumentFreehand.new(BrushPattern.new(erase_pattern_holder, ds), ds), InstrumentFreehand.new(BrushPattern.new(erase_pattern_holder, ds), ds)),
+		__create_instrument_tool_button("Line",      KEY_L,                  preload("icons/paint_tool_line.svg"),      InstrumentLine.new(BrushPattern.new(paint_pattern_holder, ds), ds), InstrumentLine.new(BrushPattern.new(paint_pattern_holder, ds), ds)),
+#		__create_instrument_tool_button("Line",      KEY_L,                  preload("icons/paint_tool_line.svg"),      TipLine.new(__paper, BrushPencil.new())),
+#		__create_instrument_tool_button("Polygon",   KEY_MASK_SHIFT | KEY_D, preload("icons/paint_tool_polygon.svg"),   HandlePoly.new(__paper, TipPoly.new())),
+		__create_instrument_tool_button("Rectangle", KEY_U,                  preload("icons/paint_tool_rectangle.svg"), InstrumentRectangle.new(BrushPattern.new(paint_pattern_holder, ds), false, ds), InstrumentRectangle.new(BrushPattern.new(paint_pattern_holder, ds), true, ds)),
+#		__create_instrument_tool_button("Classic Autotiler", KEY_U,          preload("icons/paint_tool_rectangle.svg"), HandleFreehand.new(TipLine.new(BrushAutotile.new())), HandleFreehand.new(TipLine.new(BrushAutotile.new()))),
+#		__create_instrument_tool_button("Terrain brush", KEY_U,          preload("icons/paint_tool_rectangle.svg"), HandleFreehand.new(TipLine.new(BrushTerrain.new())), HandleFreehand.new(TipLine.new(BrushTerrain.new()))),
+	]))
+	__cell_type_option_button = __create_cell_type_option_button()
+	add_child(__cell_type_option_button)
+	connect("visibility_changed", self, "__on_visibility_changed")
+
+func __on_instrument_tool_button_toggled(pressed: bool, tool_button: ToolButton, left_instrument: Instrument, right_instrument: Instrument) -> void:
+	if pressed:
+		__last_instrument_tool_button = tool_button
+		emit_signal("instruments_taken", left_instrument, right_instrument)
+	else:
+		emit_signal("instruments_dropped", left_instrument, right_instrument)
+
+func __on_cell_type_option_button_selected(item_index: int) -> void:
+	emit_signal("cell_type_selected", __cell_type_option_button.get_item_metadata(item_index))
+
+
+func __on_visibility_changed() -> void:
+	if visible == __previous_visibility:
+		return
+	if visible:
+		assert(__button_group.get_pressed_button() == null)
+		var button = __default_instrument_tool_button if __last_instrument_tool_button == null else __last_instrument_tool_button
+		button.pressed = true
+	else:
+		var current_instrument_tool_button = __button_group.get_pressed_button()
+		if current_instrument_tool_button:
+			current_instrument_tool_button.pressed = false
+	__previous_visibility = visible
+
+
+
+func __create_shortcut(scancode_with_modifiers: int) -> ShortCut:
+	var event = InputEventKey.new()
+	event.pressed = true
+	event.echo = false
+	event.shift = scancode_with_modifiers & KEY_MASK_SHIFT
+	event.alt = scancode_with_modifiers & KEY_MASK_ALT
+	event.meta = scancode_with_modifiers & KEY_MASK_META
+	event.control = scancode_with_modifiers & KEY_MASK_CTRL
+	event.command = scancode_with_modifiers & KEY_MASK_CMD
+	event.scancode = scancode_with_modifiers & KEY_CODE_MASK
+	var shortcut = ShortCut.new()
+	shortcut.shortcut = event
+	return shortcut
+
+func __create_instrument_tool_button(tooltip: String, scancode_with_modifiers: int, icon: Texture, left_instrument: Instrument, right_instrument: Instrument) -> ToolButton:
+	var tool_button = ToolButton.new()
+	tool_button.focus_mode = Control.FOCUS_NONE
+	tool_button.hint_tooltip = tooltip
+	tool_button.icon = Common.resize_texture(icon, __editor_scale / 4)
+	tool_button.toggle_mode = true
+	tool_button.group = __button_group
+	tool_button.shortcut_in_tooltip = true
+	tool_button.shortcut = __create_shortcut(scancode_with_modifiers)
+	tool_button.connect("toggled", self, "__on_instrument_tool_button_toggled", [tool_button, left_instrument, right_instrument])
+	return tool_button
+
+func __create_instrument_tool_buttons_group(group_name: String, instrument_tool_buttons: Array) -> HBoxContainer:
+	var instrument_tool_buttons_container = HBoxContainer.new()
+	instrument_tool_buttons_container.name = group_name
+	for instrument_tool_button in instrument_tool_buttons:
+		instrument_tool_buttons_container.add_child(instrument_tool_button)
+	return instrument_tool_buttons_container
+
+func __create_cell_type_option_button() -> OptionButton:
+	var ob = OptionButton.new()
+	ob.flat = true
+	ob.clip_text = true
+	ob.add_icon_item(preload("icons/png/cell_type_hex.png"), "Hexademic")
+	ob.set_item_metadata(0, 0)
+	ob.add_icon_item(preload("icons/png/cell_type_tet.png"), "Tetrademic")
+	ob.set_item_metadata(1, 1)
+	ob.add_icon_item(preload("icons/png/cell_type_map.png"), "Map")
+	ob.set_item_metadata(2, 2)
+	ob.connect("item_selected", self, "__on_cell_type_option_button_selected")
+	return ob
