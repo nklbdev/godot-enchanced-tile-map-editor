@@ -1,45 +1,6 @@
 extends Object
 
-#var __tree_root: Node
-#var __signal_subscriber: Object
-#func _init(tree_root: Node, signal_subscriber: Object = null) -> void:
-#	__tree_root = tree_root
-#	__signal_subscriber = signal_subscriber if signal_subscriber else __tree_root
-#func build(props: Dictionary = {}, children: Array = [], connections: Array = []) -> void:
-#	n(__tree_root, "", props, children, connections)
-#func n(node: Node, store_in_root_property: String, props: Dictionary = {}, children: Array = [], connections: Array = []) -> Node:
-#	for key in props.keys():
-#		node.set(key, props[key])
-#	for child in children:
-#		node.add_child(child)
-#	for connection in connections:
-#		node.connect(connection.signal_name, __signal_subscriber, connection.method_name, connection.binds)
-#	if store_in_root_property:
-#		__tree_root.set(store_in_root_property, node)
-#	return node
-
-#func build(props: Dictionary = {}, children: Array = [], connections: Array = []) -> void:
-#	node(__tree_root).with_props(props).with_overrides()
-#	n(__tree_root, "", props, children, connections)
-#func n(node: Node, store_in_root_property: String, props: Dictionary = {}, children: Array = [], connections: Array = []) -> Node:
-#	for key in props.keys():
-#		node.set(key, props[key])
-#	for child in children:
-#		node.add_child(child)
-#	for connection in connections:
-#		node.connect(connection.signal_name, __signal_subscriber, connection.method_name, connection.binds)
-#	if store_in_root_property:
-#		__tree_root.set(store_in_root_property, node)
-#	return node
-
-
-
-
-
-#func node(node: Node, root_property_name: String = "") -> NodeBuilder:
-#	return NodeBuilder.new(__tree_root, node, root_property_name)
-
-class NodeBuilder:
+class __Builder:
 	var _root: Node
 	var __signal_subscriber: Object
 	var __node: Node
@@ -55,19 +16,19 @@ class NodeBuilder:
 		__root_property_name = root_property_name
 		__signal_subscriber = signal_subscriber if signal_subscriber else root
 
-	func with_props(props: Dictionary) -> NodeBuilder:
+	func with_props(props: Dictionary) -> __Builder:
 		__props.merge(props, true)
 		return self
 
-	func with_children(children: Array) -> NodeBuilder:
+	func with_children(children: Array) -> __Builder:
 		__children_builders.append_array(children)
 		return self
 
-	func connected(signal_name: String, method_name: String, binds: Array = []) -> NodeBuilder:
+	func connected(signal_name: String, method_name: String, binds: Array = []) -> __Builder:
 		__connections.append({ signal_name = signal_name, method_name = method_name, binds = binds })
 		return self
 
-	func with_overrides(overrides: Dictionary) -> NodeBuilder:
+	func with_overrides(overrides: Dictionary) -> __Builder:
 		__constant_overrides.merge(overrides, true)
 		return self
 
@@ -84,13 +45,13 @@ class NodeBuilder:
 			__node.connect(connection.signal_name, __signal_subscriber, connection.method_name, connection.binds)
 		return __node
 
-class NodeBuilderRoot:
-	extends NodeBuilder
+class __BuilderRoot:
+	extends __Builder
 	func _init(root: Node, node: Node, root_property_name: String = "", signal_subscriber: Object = null) \
 		.(root, node, root_property_name, signal_subscriber) -> void:
 		pass
-	func node(node: Node, root_property_name: String = "") -> NodeBuilder:
-		return NodeBuilder.new(_root, node, root_property_name)
+	func node(node: Node, root_property_name: String = "") -> __Builder:
+		return __Builder.new(_root, node, root_property_name)
 
-static func tree(tree_root: Node, signal_subscriber: Object = null) -> NodeBuilderRoot:
-	return NodeBuilderRoot.new(tree_root, tree_root, "", signal_subscriber)
+static func tree(tree_root: Node, signal_subscriber: Object = null) -> __BuilderRoot:
+	return __BuilderRoot.new(tree_root, tree_root, "", signal_subscriber)

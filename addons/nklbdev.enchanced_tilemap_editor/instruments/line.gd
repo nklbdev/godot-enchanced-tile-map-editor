@@ -2,24 +2,25 @@ extends "_base.gd"
 
 const Iterators = preload("../iterators.gd")
 
-func _init(brush: Brush, drawing_settings: Common.DrawingSettings).(brush, drawing_settings) -> void:
+func _init(brush: Brush, paper_holder: Common.ValueHolder).(brush, paper_holder) -> void:
 	pass
 
 func _after_pushed() -> void:
-	_brush.paint(_origin_cell)
+	_brush.paint(_origin_cell, _paper_holder.value)
 
 func _on_moved() -> void:
 	if _is_pushed:
-		_paper.reset_changes()
+		_paper_holder.value.reset_changes()
 		# draw line
 		# todo: improve line algorithm
-		for cell in Iterators.line(_origin_cell, _cell):
-			_brush.paint(cell)
+		for cell in Iterators.line(_origin_cell, _position_cell):
+			_brush.paint(cell, _paper_holder.value)
 
-func _on_draw(overlay: Control, tile_map: TileMap, force: bool = false) -> void:
+func _on_draw(overlay: Control) -> void:
 	if _is_pushed:
 		# draw line
 		# todo: improve line algorithm
-		var color = _drawing_settings.drawn_cells_color
-		for cell in Iterators.line(_origin_cell, _cell):
-			overlay.draw_rect(_paper.get_cell_world_rect(cell), color)
+		var half_offset: int = _paper_holder.value.get_half_offset()
+		for cell in Iterators.line(_origin_cell, _position_cell):
+			_brush.draw(cell, overlay, half_offset)
+#			overlay.draw_rect(_paper.get_cell_world_rect(cell), color)

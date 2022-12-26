@@ -8,7 +8,6 @@ class Subtile:
 		var tile_region = tile_set.tile_get_region(tile_id)
 		rect_position = tile_region.position
 		rect_size = tile_region.size
-		pass
 	pass
 
 const SUBTILE_COLORS = PoolColorArray([
@@ -38,11 +37,13 @@ class Tile:
 		var column_count = rect_min_size.x / (subtile_size.x + subtile_spacing)
 		var row_count = rect_min_size.y / (subtile_size.y + subtile_spacing)
 		for y in row_count: for x in column_count:
-			subtiles.append(tb.node(Subtile.new(Vector2(x, y), tile_id, tile_set)) \
+			var subtile = tb.node(Subtile.new(Vector2(x, y), tile_id, tile_set)) \
 				.with_props({
 					border_color = subtile_color,
 					rect_min_size = subtile_size,
-					rect_size = subtile_size}))
+					rect_size = subtile_size})
+			#TODO сделать выбор паттерна subtile.connect("gui_input", self, "__on_subtile_gui_input", [subtile])
+			subtiles.append(subtile)
 
 		tb.node(self).with_children([
 			tb.node(GridContainer.new()) \

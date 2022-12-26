@@ -1,72 +1,95 @@
-extends "../_setupable.gd"
+extends Object
 
+const Common = preload("../common.gd")
+const Paper = preload("../paper.gd")
 const Brush = preload("../brushes/_base.gd")
 
-var _origin_hex_cell: Vector2 setget _set_origin_hex_cell
-func _set_origin_hex_cell(value: Vector2) -> void:
-	_origin_hex_cell = value
-	if _paper != null:
-		_origin_cell = _paper.get_cell_by_hex_cell(_origin_hex_cell)
-var _origin_cell: Vector2
-var _hex_cell: Vector2 setget _set_hex_cell
-func _set_hex_cell(value: Vector2) -> void:
-	_hex_cell = value
-	if _paper != null:
-		_cell = _paper.get_cell_by_hex_cell(_hex_cell)
-var _cell: Vector2
-var _is_pushed: bool
+
 var _brush: Brush
+var _paper_holder: Common.ValueHolder
 
-func _init(brush: Brush, drawing_settings: Common.DrawingSettings).(drawing_settings) -> void:
+func _init(brush: Brush, paper_holder: Common.ValueHolder) -> void:
 	_brush = brush
+	_paper_holder = paper_holder
 
+
+#var _paper: Paper
+#func is_ready() -> bool:
+#	return _paper != null
+#func set_up(paper: Paper) -> void:
+#	assert(_paper == null, "can not set up twice")
+#	_paper = paper
+#	_after_set_up()
+#func tear_down() -> void:
+#	assert(_paper != null, "can not tear down twice")
+#	_before_tear_down()
+#	_paper = null
+# for override
+#func _after_set_up() -> void:
+#	pass
+#func _before_tear_down() -> void:
+#	pass
+
+
+var _origin_cell: Vector2
+var _origin: Vector2 setget _set_origin
+func _set_origin(value: Vector2) -> void:
+	_origin = value
+	_origin_cell = _brush.get_cell(_origin, _paper_holder.value.get_half_offset())
+
+var _position_cell: Vector2
+var _position: Vector2 setget _set_position
+func _set_position(value: Vector2) -> void:
+	_position = value
+	_position_cell = _brush.get_cell(_position, _paper_holder.value.get_half_offset())
+
+
+
+
+
+
+
+var _is_pushed: bool
 func is_pushed() -> bool:
 	return _is_pushed
 
 func push() -> void:
-	assert(is_ready())
 	if _is_pushed:
 		return
-	_paper.reset_changes()
-	_set_origin_hex_cell(_hex_cell)
+	_paper_holder.value.reset_changes()
+	_set_origin(_position)
 	_is_pushed = true
 	_after_pushed()
 
 func pull() -> void:
-	assert(is_ready())
 	if not _is_pushed:
 		return
-	_paper.commit_changes()
+	_paper_holder.value.commit_changes()
 	_before_pulled()
 	_is_pushed = false
 
 func interrupt() -> void:
-	assert(is_ready())
 	assert(is_pushed())
-	_paper.reset_changes()
+	_paper_holder.value.reset_changes()
 	pull()
 
-func move_to(hex_cell: Vector2) -> void:
-	_set_hex_cell(hex_cell)
+func move_to(position: Vector2) -> void:
+	_set_position(position)
 	if not _is_pushed:
-		_set_origin_hex_cell(hex_cell)
+		_set_origin(position)
 	_on_moved()
-
-
-func _after_set_up() -> void:
-	_brush.set_up(_paper)
-
-func _before_tear_down() -> void:
-	_brush.tear_down()
-
+# for override
 func _after_pushed() -> void:
 	pass
-
 func _before_pulled() -> void:
 	pass
-
 func _on_moved() -> void:
 	pass
 
-func _on_draw(overlay: Control, tile_map: TileMap, force: bool = false) -> void:
+
+
+
+func draw(overlay: Control) -> void:
+	_on_draw(overlay)
+func _on_draw(overlay: Control) -> void:
 	pass

@@ -1,6 +1,6 @@
 extends "_base.gd"
 
-func _init(brush: Brush, drawing_settings: Common.DrawingSettings).(brush, drawing_settings) -> void:
+func _init(brush: Brush, paper_holder: Common.ValueHolder).(brush, paper_holder) -> void:
 	pass
 
 #var __comparator

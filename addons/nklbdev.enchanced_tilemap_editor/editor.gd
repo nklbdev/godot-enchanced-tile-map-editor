@@ -10,6 +10,11 @@ const Palette = preload("palette/palette.gd")
 const CanvasItemVisibilityController = preload("canvas_item_visibility_controller.gd")
 const Instrument = preload("instruments/_base.gd")
 const Paper = preload("paper.gd")
+const Brush = preload("brushes/_base.gd")
+const BrushSelection = preload("brushes/selection.gd")
+const BrushPattern = preload("brushes/pattern.gd")
+const BrushAutotile = preload("brushes/autotile.gd")
+const BrushTerrain = preload("brushes/terrain.gd")
 
 var __tile_map: TileMap
 
@@ -84,11 +89,12 @@ func _enter_tree() -> void:
 	var editor_scale = editor_interface.get_editor_scale()
 	__palette = Palette.new(editor_scale)
 	add_control_to_bottom_panel(__palette, "Tile Palette")
-	__tool_bar = ToolBar.new(__visual_root, __selection, __drawing_settings, editor_scale)
+	
+	__tool_bar = ToolBar.new(__drawing_settings, editor_scale)
 	context_menu_hbox.add_child(__tool_bar)
 	__tool_bar.connect("instruments_taken", self, "__on_tool_bar_instruments_taken")
 	__tool_bar.connect("instruments_dropped", self, "__on_tool_bar_instruments_dropped")
-	__tool_bar.connect("cell_type_selected", self, "__on_tool_bar_cell_type_selected")
+#	__tool_bar.connect("cell_type_selected", self, "__on_tool_bar_cell_type_selected")
 	
 
 func _exit_tree() -> void:
@@ -115,27 +121,44 @@ func handles(object: Object) -> bool:
 	Common.print_log("handles(%s) -> %s" % [Common.to_string_pretty(object), result])
 	return result
 
+func __set_up(tile_map: TileMap) -> void:
+	assert(__tile_map == null)
+	assert(tile_map != null)
+	__tile_map = tile_map
+	__palette.set_tile_set(__tile_map.tile_set)
+	__paper = Paper.new(__tile_map)
+	__tool_bar.set_up(__paper)
+	__original_tile_map_editor._node_removed(__tile_map)
+	__original_tile_map_editor.hide()
+	__selection.clear()
+
+func __tear_down() -> void:
+	assert(__tile_map != null)
+	__tool_bar.tear_down()
+	__paper = null
+	__tile_map = null
+	__palette.set_tile_set(null)
+
+
 # called with true right after edit(object)
 # called with false on work with object is finished
 # can be called with false multiple times
 func make_visible(visible: bool) -> void:
 	Common.print_log("make_visible(%s)" % [visible])
-	assert(not (__tile_map == null and __tool_bar.visible), \
-		"inconsistent state: the plugin is visible without edited object")
-	assert(not (__tile_map == null and not __tool_bar.visible and visible), \
-		"invalid operation: set plugin visible without edited object")
-	assert(not (__tile_map != null and __tool_bar.visible and visible), \
-		"invalid operation: set plugin visible more than once in a row")
+#	assert(not (__tile_map == null and __tool_bar.visible), \
+#		"inconsistent state: the plugin is visible without edited object")
+#	assert(not (__tile_map == null and not __tool_bar.visible and visible), \
+#		"invalid operation: set plugin visible without edited object")
+#	assert(not (__tile_map != null and __tool_bar.visible and visible), \
+#		"invalid operation: set plugin visible more than once in a row")
 	if visible == __tool_bar.visible:
 		return
 	if visible:
-		__tool_bar.visible = true
+#		assert(false, "что это еще такое?")
+#		__tool_bar.visible = true
+		pass
 	else:
-		__paper = null
-		__tile_map = null
-		__tool_bar.visible = false
-		__palette.set_tile_set(null)
-	pass
+		__tear_down()
 
 # can be called only if visible == false
 # recalled on rename node with visibility blink
@@ -144,13 +167,8 @@ func edit(object: Object) -> void:
 	Common.print_log("edit %s" % object)
 	# при переключении карты с одной на другую, тут будет старая.
 	assert(__tile_map == null, "на данный момент не должно быть текущей тайловой карты")
-	__tile_map = object as TileMap
-	__palette.set_tile_set(__tile_map.tile_set)
-	__paper = Paper.new(__tile_map)
-	assert(__tile_map != null, "тайловая карта должна быть обязательно передана")
-	__original_tile_map_editor._node_removed(__tile_map)
-	__original_tile_map_editor.hide()
-	__selection.clear()
+	assert(object is TileMap, "тайловая карта должна быть обязательно передана")
+	__set_up(object as TileMap)
 
 func has_main_screen() -> bool:
 	Common.print_log("has_main_screen")
@@ -161,14 +179,14 @@ func __is_event_is_mouse_button_pressed_outside_viewport(event: InputEvent) -> b
 		event.pressed and \
 		not __overlay.get_rect().has_point(__overlay.get_local_mouse_position())
 
-func __get_mouse_hex_cell() -> Vector2:
+func __get_mouse_position() -> Vector2:
 	assert(__tile_map != null)
 	var zero: Vector2 = __tile_map.map_to_world(Vector2.ZERO)
-	return (Transform2D(
+	return Transform2D(
 		(__tile_map.map_to_world(Vector2.RIGHT * 2) - zero) / 2,
 		(__tile_map.map_to_world(Vector2.DOWN * 2)  - zero) / 2,
 		zero
-		).affine_inverse().xform(__tile_map.get_local_mouse_position()) * 4).floor()
+		).affine_inverse().xform(__tile_map.get_local_mouse_position())
 
 func forward_canvas_gui_input(event: InputEvent) -> bool:
 	if __tile_map == null:
@@ -193,9 +211,9 @@ func forward_canvas_gui_input(event: InputEvent) -> bool:
 				__current_instrument = null
 			is_event_consumed = true
 	elif event is InputEventMouseMotion:
-		var mouse_hex_cell = __get_mouse_hex_cell()
+		var mouse_position = __get_mouse_position()
 		for instrument in __instruments.values():
-			instrument.move_to(mouse_hex_cell)
+			instrument.move_to(mouse_position)
 #		__right_instrument.move_to(mouse_hex_cell)
 		is_event_consumed = true
 #	elif event is InputEventKey and not event.echo:
@@ -225,7 +243,9 @@ func __draw(overlay: Control, force: bool = false) -> void:
 	
 	__visual_root.transform = __tile_map.get_viewport_transform() * __tile_map.get_global_transform() * cell_base_transform
 	overlay.draw_set_transform_matrix(__visual_root.transform)
-	(__current_instrument if __current_instrument else __default_instrument).draw(overlay, __tile_map)
+	var instrument = __current_instrument if __current_instrument else __default_instrument
+	if instrument != null:
+		instrument.draw(overlay)
 	__draw_grid(overlay)
 	overlay.draw_set_transform_matrix(Transform2D.IDENTITY)
 
@@ -253,8 +273,8 @@ func __on_tool_bar_instruments_taken(left_instrument: Instrument, right_instrume
 	__instruments[BUTTON_LEFT] = left_instrument
 	__instruments[BUTTON_RIGHT] = right_instrument
 	__default_instrument = left_instrument
-	left_instrument.set_up(__paper)
-	right_instrument.set_up(__paper)
+#	left_instrument.set_up(__paper)
+#	right_instrument.set_up(__paper)
 
 func __on_tool_bar_instruments_dropped(left_instrument: Instrument, right_instrument: Instrument) -> void:
 	assert(not __instruments.empty())
@@ -263,14 +283,14 @@ func __on_tool_bar_instruments_dropped(left_instrument: Instrument, right_instru
 	for instrument in __instruments.values():
 		if instrument.is_pushed():
 			instrument.pull()
-		if instrument.is_ready():
-			instrument.tear_down()
+#		if instrument.is_ready():
+#			instrument.tear_down()
 	__current_instrument = null
 	__default_instrument = null
 	__instruments.clear()
 
-func __on_tool_bar_cell_type_selected(cell_type: int) -> void:
-	__paper.cell_type = cell_type
+#func __on_tool_bar_cell_type_selected(cell_type: int) -> void:
+#	__paper.cell_type = cell_type
 
 func __on_select_tool_button_toggled(pressed: bool) -> void:
 	if pressed:
@@ -328,41 +348,47 @@ const CELL_SUBLINES_POINTS: PoolVector2Array = PoolVector2Array([
 	Vector2( 0.25, 0   ), Vector2( 0.25, 1   ),
 ])
 
+var __temp_grid_color: Color
 func __draw_grid(overlay: Control):
 	if __tile_map == null:
 		return
 
+	var half_offset_type = __tile_map.cell_half_offset
+	var cell_position: Vector2
 	if __is_mouse_on_overlay or __current_instrument:
-		var mouse_world_position = __get_mouse_hex_cell() / 4
-		overlay.draw_rect(__paper.get_cell_world_rect(__paper.get_cell_in_world(mouse_world_position)), __drawing_settings.cursor_color)
-
-		# Draw grid fragment
-		var grid_color: Color = __drawing_settings.grid_color
-		var mouse_map_cell: Vector2 = __paper.get_cell_in_world(mouse_world_position, Paper.CELL_TYPE_MAP)# __tile_map.world_to_map(__tile_map.get_local_mouse_position())
+		__temp_grid_color = __drawing_settings.grid_color
+		var mouse_map_cell: Vector2 = __tile_map.world_to_map(__tile_map.get_local_mouse_position())
 		var draw_transform = __visual_root.transform
 		for y in range(mouse_map_cell.y - __drawing_settings.grid_fragment_radius, mouse_map_cell.y + __drawing_settings.grid_fragment_radius + 1):
 			for x in range(mouse_map_cell.x - __drawing_settings.grid_fragment_radius, mouse_map_cell.x + __drawing_settings.grid_fragment_radius + 1):
-				var map_cell_position = __paper.get_cell_world_rect(Vector2(x, y), Paper.CELL_TYPE_MAP).position # __paper.get_half_offsetted_map_cell_position(Vector2(x, y))
-#				var d = __paper.get_cell_world_rect(mouse_map_cell, Paper.CELL_TYPE_MAP)
-				overlay.draw_set_transform_matrix(draw_transform.translated(map_cell_position))
-				grid_color.a = __drawing_settings.grid_color.a * (1 - mouse_map_cell.distance_squared_to(map_cell_position) / __drawing_settings.grid_fragment_radius_squared)
-				overlay.draw_multiline(CELL_LINES_POINTS, grid_color)
-				grid_color.a /= 3
-				overlay.draw_multiline(CELL_SUBLINES_POINTS, grid_color)
+				cell_position = Vector2(x, y)
+				cell_position += Common.get_half_offset(cell_position, half_offset_type)
+				overlay.draw_set_transform_matrix(draw_transform.translated(cell_position))
+				__temp_grid_color.a = __drawing_settings.grid_color.a * (1 - mouse_map_cell.distance_squared_to(cell_position) / __drawing_settings.grid_fragment_radius_squared)
+				overlay.draw_multiline(CELL_LINES_POINTS, __temp_grid_color)
+				__temp_grid_color.a /= 3
+				overlay.draw_multiline(CELL_SUBLINES_POINTS, __temp_grid_color)
 		overlay.draw_set_transform_matrix(__visual_root.transform)
 
 
 	# Draw axis fragment
 	var axis_color: Color = __drawing_settings.axis_color
-	var cell_position: Vector2
 	for i in __drawing_settings.axis_fragment_radius + 1:
 		axis_color.a = __drawing_settings.axis_color.a * (1 - float(i) / __drawing_settings.axis_fragment_radius)
-		cell_position = __paper.get_cell_world_rect(Vector2(i, 0), Paper.CELL_TYPE_MAP).position
-		overlay.draw_line(cell_position, cell_position + Vector2.RIGHT, axis_color)
-		overlay.draw_line(- cell_position, - cell_position + Vector2.LEFT, axis_color)
-		cell_position = __paper.get_cell_world_rect(Vector2(0, i), Paper.CELL_TYPE_MAP).position
-		overlay.draw_line(cell_position, cell_position + Vector2.DOWN, axis_color)
-		overlay.draw_line(- cell_position, - cell_position + Vector2.UP, axis_color)
+		var direction = Vector2.RIGHT
+		for r in 4:
+			cell_position = direction * i
+			cell_position += Common.get_half_offset(cell_position, half_offset_type)
+			overlay.draw_line(cell_position, cell_position + direction, axis_color)
+			direction = direction.tangent()
+#		cell_position = Vector2(i, 0) + Common.get_half_offset(Vector2(i, 0), half_offset_type)
+#		cell_position = __paper.get_cell_world_rect(Vector2(i, 0), Brush.CELL_TYPE_MAP).position
+#		cell_position = 
+#		overlay.draw_line(cell_position, cell_position + Vector2.RIGHT, axis_color)
+#		overlay.draw_line(- cell_position, - cell_position + Vector2.LEFT, axis_color)
+#		cell_position = __paper.get_cell_world_rect(Vector2(0, i), Brush.CELL_TYPE_MAP).position
+#		overlay.draw_line(cell_position, cell_position + Vector2.DOWN, axis_color)
+#		overlay.draw_line(- cell_position, - cell_position + Vector2.UP, axis_color)
 #	for x in __drawing_settings.axis_fragment_radius + 1:
 #		cell_position = __paper.get_half_offsetted_map_cell_position(Vector2(x, 0))
 #		axis_color.a = __drawing_settings.axis_color.a * (1 - abs(x) / __drawing_settings.axis_fragment_radius)

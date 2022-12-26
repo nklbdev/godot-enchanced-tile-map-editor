@@ -64,6 +64,27 @@ enum PatternType {
 	BACKGROUND = 2
 }
 
+const HALF_OFFSETS: PoolVector2Array = PoolVector2Array([
+	#TileMap.HALF_OFFSET_X = 0
+	Vector2( 0,   0), Vector2( 0,    0  ),
+	Vector2( 0.5, 0), Vector2( 0.5,  0  ),
+	#TileMap.HALF_OFFSET_Y = 1
+	Vector2( 0,   0), Vector2( 0,    0.5),
+	Vector2( 0,   0), Vector2( 0,    0.5),
+	#TileMap.HALF_OFFSET_DISABLED = 2
+	Vector2( 0,   0), Vector2( 0,    0  ),
+	Vector2( 0,   0), Vector2( 0,    0  ),
+	#TileMap.HALF_OFFSET_NEGATIVE_X = 3
+	Vector2( 0,   0), Vector2( 0,    0  ),
+	Vector2(-0.5, 0), Vector2(-0.5,  0  ),
+	#TileMap.HALF_OFFSET_NEGATIVE_Y = 4
+	Vector2( 0,   0), Vector2( 0,   -0.5),
+	Vector2( 0,   0), Vector2( 0,   -0.5),
+])
+
+static func get_half_offset(map_cell: Vector2, half_offset_type: int) -> Vector2:
+	return HALF_OFFSETS[half_offset_type * 4 + posmod(map_cell.x, 2) + posmod(map_cell.y, 2) * 2]
+
 class DrawingSettings:
 	var display_grid_enabled: bool
 	var cursor_color: Color
