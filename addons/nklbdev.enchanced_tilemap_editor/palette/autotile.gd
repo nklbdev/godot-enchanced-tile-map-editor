@@ -1,8 +1,9 @@
 extends "_list_subpalette.gd"
 
-func _on_fill(tile_set: TileSet) -> void:
+func _after_set_up() -> void:
+	var tile_set = __tile_map.tile_set
 	for tile_id in tile_set.get_tiles_ids():
-		var tile_texture = __tile_set.tile_get_texture(tile_id)
+		var tile_texture = __tile_map.tile_set.tile_get_texture(tile_id)
 		var tile_region = tile_set.tile_get_region(tile_id)
 		var tile_mode = tile_set.tile_get_tile_mode(tile_id)
 		var subtile_size = tile_region.size \
@@ -19,6 +20,6 @@ func _on_fill(tile_set: TileSet) -> void:
 		tile_icon.flags = tile_texture.flags
 		_add_item("%s: %s" % [tile_id, tile_set.tile_get_name(tile_id)], tile_icon, tile_id)
 
-func _on_clear() -> void:
+func _before_tear_down() -> void:
 	pass
 

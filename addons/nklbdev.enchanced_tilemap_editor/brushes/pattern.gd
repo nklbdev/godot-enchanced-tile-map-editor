@@ -2,7 +2,7 @@ extends "_base.gd"
 
 var pattern: Common.Pattern
 
-func _init(drawing_settings: Common.DrawingSettings, pattern: Common.Pattern = null).(drawing_settings) -> void:
+func _init(settings: Common.Settings, pattern: Common.Pattern = null).(settings) -> void:
 	self.pattern = pattern
 
 
@@ -10,7 +10,7 @@ func _init(drawing_settings: Common.DrawingSettings, pattern: Common.Pattern = n
 
 func _paint_hex_cell(hex_cell: Vector2, paper: Paper) -> void:
 	if pattern != null:
-		var map_cell = _get_map_cell(hex_cell / 4, paper.get_half_offset())
+		var map_cell = __get_map_cell(hex_cell / 4, paper.half_offset_type)
 		paper.set_map_cell_data(map_cell, pattern.get_map_cell_data(map_cell))
 
 func _paint_tet_cell(tet_cell: Vector2, paper: Paper) -> void:
@@ -27,23 +27,24 @@ func _paint_map_cell(map_cell: Vector2, paper: Paper) -> void:
 
 func _paint_pat_cell(pat_cell: Vector2, paper: Paper) -> void:
 	if pattern != null:
-		var pattern_origin_map_cell = pattern.offset + pattern.size * pat_cell
+		var pattern_origin_map_cell = paper.pattern_offset + pattern.size * pat_cell
 		for y in pattern.size.y: for x in pattern.size.x:
 			var addr = (x + y * pattern.size.x) * 4
 			paper.set_map_cell_data(pattern_origin_map_cell + Vector2(x, y), pattern.data.slice(addr, addr + 4))
 
 
-func _get_pat_cell(world_position: Vector2, half_offset: int) -> Vector2:
-	return Vector2.ZERO if pattern == null else ((_get_map_cell(world_position, half_offset) - pattern.offset) / pattern.size).floor()
+func _get_pat_cell(world_position: Vector2, paper: Paper) -> Vector2:
+	return Vector2.ZERO if pattern == null else ((__get_map_cell(world_position, paper.half_offset_type) - paper.pattern_offset) / pattern.size).floor()
 
 
 
-func _draw_pat_cell(cell: Vector2, overlay: Control, half_offset: int) -> void:
+func _draw_pat_cell(cell: Vector2, overlay: Control, paper: Paper) -> void:
 	if pattern != null:
-		var pattern_origin_map_cell = pattern.offset + pattern.size * cell
+		var half_offset_type = paper.half_offset_type
+		var pattern_origin_map_cell = paper.pattern_offset + pattern.size * cell
 		for y in pattern.size.y: for x in pattern.size.x:
 			var c = pattern_origin_map_cell + Vector2(x, y)
-			overlay.draw_rect(Rect2(c + Common.get_half_offset(c, half_offset), Vector2.ONE), _drawing_settings.drawn_cells_color)
+			overlay.draw_rect(Rect2(c + Common.get_half_offset(c, half_offset_type), Vector2.ONE), _settings.drawn_cells_color)
 
 
 

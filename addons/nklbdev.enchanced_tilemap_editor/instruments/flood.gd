@@ -2,7 +2,7 @@ extends "_base.gd"
 
 const Iterators = preload("../iterators.gd")
 
-func _init(brush: Brush, paper_holder: Common.ValueHolder).(brush, paper_holder) -> void:
+func _init(brush: Brush, paper: Paper).(brush, paper) -> void:
 	pass
 
 func _after_pushed() -> void:
@@ -60,6 +60,7 @@ func _after_pushed() -> void:
 #			_brush.paint(cell)
 
 func _on_draw(overlay: Control) -> void:
+	_brush.draw(_origin_cell, overlay, _paper)
 #	if _is_pushed:
 #		# draw line
 #		# todo: improve line algorithm

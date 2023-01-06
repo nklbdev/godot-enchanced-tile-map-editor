@@ -2,40 +2,38 @@ extends "_base.gd"
 
 const Iterators = preload("../iterators.gd")
 
-func _init(brush: Brush, paper_holder: Common.ValueHolder).(brush, paper_holder) -> void:
-	pass
-
+var __tracing: bool
 var __drawn_cells: PoolVector2Array
 var __unique_drawn_cells: Dictionary
 
+func _init(brush: Brush, paper: Paper, tracing = true).(brush, paper) -> void:
+	__tracing = tracing
+
 func _before_pulled() -> void:
-	__drawn_cells.resize(0)
-	__unique_drawn_cells.clear()
+	if __tracing:
+		__drawn_cells.resize(0)
+		__unique_drawn_cells.clear()
 
 func _after_pushed() -> void:
-	__drawn_cells.resize(0)
-	__unique_drawn_cells.clear()
-	_brush.paint(_origin_cell, _paper_holder.value)
-	__drawn_cells.append(_origin_cell)
-	__unique_drawn_cells[_origin_cell] = true
+	_brush.paint(_position_cell, _paper)
+	if __tracing:
+		__drawn_cells.resize(0)
+		__unique_drawn_cells.clear()
+		__drawn_cells.append(_position_cell)
+		__unique_drawn_cells[_position_cell] = true
 
-func _on_moved() -> void:
+func _on_moved(from_position: Vector2, from_cell: Vector2) -> void:
 	if _is_pushed:
-		# draw line
 		# todo: improve line algorithm
-		for cell in Iterators.line(_origin_cell, _position_cell).skip(1):
-			_brush.paint(cell, _paper_holder.value)
-			__drawn_cells.append(cell)
-			__unique_drawn_cells[cell] = true
-	_set_origin(_position)
+		for cell in Iterators.line(from_cell, _position_cell).skip(1):
+			_brush.paint(cell, _paper)
+			if __tracing:
+				__drawn_cells.append(cell)
+				__unique_drawn_cells[cell] = true
 
 func _on_draw(overlay: Control) -> void:
-	
-	if _is_pushed:
-		# draw line
+	_brush.draw(_position_cell, overlay, _paper)
+	if __tracing and _is_pushed:
 		# todo: improve line algorithm
-#		var color = _drawing_settings.drawn_cells_color
-		var half_offset: int = _paper_holder.value.get_half_offset()
 		for cell in __unique_drawn_cells.keys():
-			_brush.draw(cell, overlay, half_offset)
-#			overlay.draw_rect(_paper.get_cell_world_rect(cell), color)
+			_brush.draw(cell, overlay, _paper)

@@ -3,8 +3,10 @@ extends HBoxContainer
 const TreeBuilder = preload("tree_builder.gd")
 
 const Common         = preload("common.gd")
-const Selection      = preload("selection.gd")
+#const SelectionMap      = preload("selection_map.gd")
 const Paper          = preload("paper.gd")
+const Palette        = preload("palette/palette.gd")
+#const Selection      = preload("selection.gd")
 
 # Instruments
 const Instrument     = preload("instruments/_base.gd")
@@ -13,13 +15,15 @@ const InstrumentLine     = preload("instruments/line.gd")
 const InstrumentRectangle     = preload("instruments/rectangle.gd")
 const InstrumentFlood     = preload("instruments/flood.gd")
 const InstrumentSame     = preload("instruments/same.gd")
+const InstrumentDot     = preload("instruments/dot.gd")
 
 # Brushes
 const Brush    = preload("brushes/_base.gd")
-const BrushSelection    = preload("brushes/selection.gd")
+#const BrushSelection    = preload("brushes/selection.gd")
 const BrushPattern    = preload("brushes/pattern.gd")
 const BrushAutotile    = preload("brushes/autotile.gd")
 const BrushTerrain    = preload("brushes/terrain.gd")
+const BrushPatternOffset = preload("brushes/pattern_offset.gd")
 
 const __key_mode_map: Dictionary = {
 	KEY_SHIFT: Common.InstrumentMode.MODE_A,
@@ -37,12 +41,13 @@ var __previous_visibility: bool
 var __default_instrument_tool_button: ToolButton
 var __last_instrument_tool_button: ToolButton
 var __editor_scale: float = 1
-var __cell_type_option_button: OptionButton
+#var __cell_type_option_button: OptionButton
 
-var __paper_holder: Common.ValueHolder = Common.ValueHolder.new()
+var __selection_brush: BrushPattern
+var __erase_selection_brush: BrushPattern
 
-var __selection_brush: BrushSelection
 var __pattern_brush: BrushPattern
+var __pattern_offset_brush: BrushPatternOffset
 var __erasing_brush: BrushPattern
 var __autotile_brush: BrushAutotile
 var __terrain_brush: BrushTerrain
@@ -52,25 +57,35 @@ signal instruments_dropped(left_handle, right_handle)
 signal cell_type_selected(cell_type)
 
 
+func __on_palette_pattern_selected(pattern: Common.Pattern):
+	__pattern_brush.pattern = pattern
 
-func _init(drawing_settings: Common.DrawingSettings, editor_scale: float = 1) -> void:
+func __on_palette_autotile_selected(autotile):
+	pass
+
+func __on_palette_terrain_selected(terrain):
+	pass
+
+func _init(palette: Palette, tile_map_paper: Paper, selection: Paper, settings: Common.Settings, editor_scale: float = 1) -> void:
 	visible = false
 	__editor_scale = editor_scale
 	__previous_visibility = false
 	__button_group = ButtonGroup.new()
 	name = "EnchancedTileMapEditorToolBar"
-	__selection_brush = BrushSelection.new(drawing_settings)
-	__pattern_brush = BrushPattern.new(drawing_settings, Common.Pattern.new(Vector2.ONE * 3, PoolIntArray([
-		0, 0, 2, 2,    0, 0, 3, 1,    0, 0, 3, 2,
-		0, 0, 2, 1,    0, 0, 0, 0,    0, 0, 0, 1,
-		0, 0, 1, 2,    0, 0, 1, 1,    0, 0, 0, 2,
-	])))
-	__erasing_brush = BrushPattern.new(drawing_settings, Common.Pattern.new(Vector2.ONE, PoolIntArray([TileMap.INVALID_CELL, 0, 0, 0])))
-	__autotile_brush = BrushAutotile.new(drawing_settings)
-	__terrain_brush = BrushTerrain.new(drawing_settings)
+	__selection_brush = BrushPattern.new(settings, Common.Pattern.new(Vector2.ONE, PoolIntArray([0, 0, 0, 0])))
+	__erase_selection_brush = BrushPattern.new(settings, Common.Pattern.new(Vector2.ONE, PoolIntArray([TileMap.INVALID_CELL, 0, 0, 0])))
+	__pattern_brush = BrushPattern.new(settings, null)
+	__pattern_offset_brush = BrushPatternOffset.new(settings)
+	__erasing_brush = BrushPattern.new(settings, Common.Pattern.new(Vector2.ONE, PoolIntArray([TileMap.INVALID_CELL, 0, 0, 0])))
+	__autotile_brush = BrushAutotile.new(settings)
+	__terrain_brush = BrushTerrain.new(settings)
+	palette.connect("pattern_selected", self, "__on_palette_pattern_selected")
+	palette.connect("autotile_selected", self, "__on_palette_autotile_selected")
+	palette.connect("terrain_selected", self, "__on_palette_terrain_selected")
 
-	__default_instrument_tool_button = __create_instrument_tool_button("Brush",     KEY_B,                  preload("icons/paint_tool_brush.svg"),     InstrumentFreehand.new(__pattern_brush, __paper_holder), InstrumentFreehand.new(__pattern_brush, __paper_holder))
+	__default_instrument_tool_button = __create_instrument_tool_button("Brush",     KEY_B,                  preload("icons/paint_tool_brush.svg"),     InstrumentFreehand.new(__pattern_brush, tile_map_paper), InstrumentFreehand.new(__pattern_offset_brush, tile_map_paper, false))
 	add_child(__create_instrument_tool_buttons_group("SelectionTools", [
+		__create_instrument_tool_button("Rectangle Selection",     KEY_M,              preload("icons/selection_tool_rectangle.svg"), InstrumentRectangle.new(__selection_brush, selection, true), InstrumentRectangle.new(__erase_selection_brush, selection, true))
 #		__create_instrument_tool_button("Rectangle Selection", KEY_M,                  preload("icons/selection_tool_rectangle.svg"), HandlePair.new(__paper, TipRectangle.new())),
 #		__create_instrument_tool_button("Lasso Selection",     KEY_Q,                  preload("icons/selection_tool_lasso.svg"),     HandleFreehand.new(__paper, TipPoly.new())),
 #		__create_instrument_tool_button("Polygon Selection",   KEY_MASK_SHIFT | KEY_Q, preload("icons/selection_tool_polygon.svg"),   HandlePoly.new(__paper, TipPoly.new())),
@@ -82,25 +97,17 @@ func _init(drawing_settings: Common.DrawingSettings, editor_scale: float = 1) ->
 		__default_instrument_tool_button,
 #		__create_instrument_tool_button("Bucket",    KEY_G,                  preload("icons/paint_tool_bucket.svg"),    HandleSingle.new(__paper, TipFlood.new())),
 #		__create_instrument_tool_button("Contour",   KEY_D,                  preload("icons/paint_tool_contour.svg"),   HandleFreehand.new(__paper, TipPoly.new())),
-		__create_instrument_tool_button("Eraser",    KEY_E,                  preload("icons/paint_tool_eraser.svg"),    InstrumentFreehand.new(__pattern_brush, __paper_holder), InstrumentFreehand.new(__pattern_brush, __paper_holder)),
-		__create_instrument_tool_button("Line",      KEY_L,                  preload("icons/paint_tool_line.svg"),      InstrumentLine.new(__pattern_brush, __paper_holder), InstrumentLine.new(__pattern_brush, __paper_holder)),
+		__create_instrument_tool_button("Eraser",    KEY_E,                  preload("icons/paint_tool_eraser.svg"),    InstrumentFreehand.new(__erasing_brush, tile_map_paper), InstrumentFreehand.new(__erasing_brush, tile_map_paper)),
+		__create_instrument_tool_button("Line",      KEY_L,                  preload("icons/paint_tool_line.svg"),      InstrumentLine.new(__pattern_brush, tile_map_paper), InstrumentLine.new(__pattern_brush, tile_map_paper)),
 #		__create_instrument_tool_button("Line",      KEY_L,                  preload("icons/paint_tool_line.svg"),      TipLine.new(__paper, BrushPencil.new())),
 #		__create_instrument_tool_button("Polygon",   KEY_MASK_SHIFT | KEY_D, preload("icons/paint_tool_polygon.svg"),   HandlePoly.new(__paper, TipPoly.new())),
-		__create_instrument_tool_button("Rectangle", KEY_U,                  preload("icons/paint_tool_rectangle.svg"), InstrumentRectangle.new(__pattern_brush, __paper_holder, false), InstrumentRectangle.new(__pattern_brush, __paper_holder, true)),
+		__create_instrument_tool_button("Rectangle", KEY_U,                  preload("icons/paint_tool_rectangle.svg"), InstrumentRectangle.new(__pattern_brush, tile_map_paper, false), InstrumentRectangle.new(__pattern_brush, tile_map_paper, true)),
 #		__create_instrument_tool_button("Classic Autotiler", KEY_U,          preload("icons/paint_tool_rectangle.svg"), HandleFreehand.new(TipLine.new(BrushAutotile.new())), HandleFreehand.new(TipLine.new(BrushAutotile.new()))),
 #		__create_instrument_tool_button("Terrain brush", KEY_U,          preload("icons/paint_tool_rectangle.svg"), HandleFreehand.new(TipLine.new(BrushTerrain.new())), HandleFreehand.new(TipLine.new(BrushTerrain.new()))),
 	]))
-	__cell_type_option_button = __create_cell_type_option_button()
-	add_child(__cell_type_option_button)
+#	__cell_type_option_button = __create_cell_type_option_button()
+#	add_child(__cell_type_option_button)
 	connect("visibility_changed", self, "__on_visibility_changed")
-
-func set_up(paper: Paper) -> void:
-	__paper_holder.value = paper
-	visible = true
-
-func tear_down() -> void:
-	__paper_holder.value = null
-	visible = false
 
 func __on_instrument_tool_button_toggled(pressed: bool, tool_button: ToolButton, left_instrument: Instrument, right_instrument: Instrument) -> void:
 	if pressed:
@@ -109,8 +116,8 @@ func __on_instrument_tool_button_toggled(pressed: bool, tool_button: ToolButton,
 	else:
 		emit_signal("instruments_dropped", left_instrument, right_instrument)
 
-func __on_cell_type_option_button_selected(item_index: int) -> void:
-	__pattern_brush.cell_type = __cell_type_option_button.get_item_metadata(item_index)
+#func __on_cell_type_option_button_selected(item_index: int) -> void:
+#	__pattern_brush.cell_type = __cell_type_option_button.get_item_metadata(item_index)
 #	emit_signal("cell_type_selected", __cell_type_option_button.get_item_metadata(item_index))
 
 
@@ -162,17 +169,17 @@ func __create_instrument_tool_buttons_group(group_name: String, instrument_tool_
 		instrument_tool_buttons_container.add_child(instrument_tool_button)
 	return instrument_tool_buttons_container
 
-func __create_cell_type_option_button() -> OptionButton:
-	var ob = OptionButton.new()
-	ob.flat = true
-	ob.clip_text = true
-	ob.add_icon_item(preload("icons/png/cell_type_hex.png"), "Hexademic")
-	ob.set_item_metadata(0, 0)
-	ob.add_icon_item(preload("icons/png/cell_type_tet.png"), "Tetrademic")
-	ob.set_item_metadata(1, 1)
-	ob.add_icon_item(preload("icons/png/cell_type_map.png"), "Map")
-	ob.set_item_metadata(2, 2)
-	ob.add_icon_item(preload("icons/png/cell_type_map.png"), "Pattern")
-	ob.set_item_metadata(3, 3)
-	ob.connect("item_selected", self, "__on_cell_type_option_button_selected")
-	return ob
+#func __create_cell_type_option_button() -> OptionButton:
+#	var ob = OptionButton.new()
+#	ob.flat = true
+#	ob.clip_text = true
+#	ob.add_icon_item(preload("icons/png/cell_type_hex.png"), "Hexademic")
+#	ob.set_item_metadata(0, 0)
+#	ob.add_icon_item(preload("icons/png/cell_type_tet.png"), "Tetrademic")
+#	ob.set_item_metadata(1, 1)
+#	ob.add_icon_item(preload("icons/png/cell_type_map.png"), "Map")
+#	ob.set_item_metadata(2, 2)
+#	ob.add_icon_item(preload("icons/png/cell_type_map.png"), "Pattern")
+#	ob.set_item_metadata(3, 3)
+#	ob.connect("item_selected", self, "__on_cell_type_option_button_selected")
+#	return ob

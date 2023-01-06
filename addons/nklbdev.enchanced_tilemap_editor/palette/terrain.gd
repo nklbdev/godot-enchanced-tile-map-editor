@@ -1,6 +1,7 @@
 extends "_list_subpalette.gd"
 
-func _on_fill(tile_set: TileSet) -> void:
+func _after_set_up() -> void:
+	var tile_set = __tile_map.tile_set
 	__read_tileset(tile_set)
 	for terrain_name in __terrains_by_name.keys():
 		var terrain: Terrain = __terrains_by_name[terrain_name] as Terrain
@@ -8,7 +9,7 @@ func _on_fill(tile_set: TileSet) -> void:
 		var terrain_caption: String
 		if terrain.icon_subtile:
 			var icon_subtile_tile_id = terrain.icon_subtile.tile_id
-			var tile_texture = __tile_set.tile_get_texture(icon_subtile_tile_id)
+			var tile_texture = tile_set.tile_get_texture(icon_subtile_tile_id)
 			var tile_region = tile_set.tile_get_region(icon_subtile_tile_id)
 			var tile_mode = tile_set.tile_get_tile_mode(icon_subtile_tile_id)
 			var subtile_size = tile_region.size \
@@ -30,18 +31,12 @@ func _on_fill(tile_set: TileSet) -> void:
 			terrain_caption = "[NONE]"
 		_add_item(terrain_caption, icon, terrain)
 
-func _on_clear() -> void:
+func _before_tear_down() -> void:
 	__terrains.clear()
 	__terrains_by_name.clear()
 	__subtiles_by_address.clear()
 	__terrain_distance.clear()
 	__terrain_transitions.clear()
-
-
-
-
-
-
 
 
 

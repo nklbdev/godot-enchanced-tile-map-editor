@@ -1,6 +1,6 @@
 extends "_base.gd"
 
-func _init(brush: Brush, paper_holder: Common.ValueHolder).(brush, paper_holder) -> void:
+func _init(brush: Brush, paper: Paper).(brush, paper) -> void:
 	pass
 
 #var __comparator
@@ -24,3 +24,6 @@ func _init(brush: Brush, paper_holder: Common.ValueHolder).(brush, paper_holder)
 #
 #func _on_moved(from_hex_cell: Vector2) -> void:
 #	pass
+
+func _on_draw(overlay: Control) -> void:
+	_brush.draw(_origin_cell, overlay, _paper)

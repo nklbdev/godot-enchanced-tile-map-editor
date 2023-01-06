@@ -64,6 +64,17 @@ enum PatternType {
 	BACKGROUND = 2
 }
 
+const MODIFIER_KEYS: PoolIntArray = PoolIntArray([
+	KEY_CONTROL, KEY_ALT, KEY_SHIFT, KEY_META
+])
+const ALL_MODIFIER_KEYS: int = KEY_CONTROL | KEY_ALT | KEY_SHIFT | KEY_META
+static func get_current_modifiers() -> int:
+	var modifiers: int
+	for key in MODIFIER_KEYS:
+		if Input.is_key_pressed(key):
+			modifiers |= key
+	return modifiers
+
 const HALF_OFFSETS: PoolVector2Array = PoolVector2Array([
 	#TileMap.HALF_OFFSET_X = 0
 	Vector2( 0,   0), Vector2( 0,    0  ),
@@ -85,27 +96,94 @@ const HALF_OFFSETS: PoolVector2Array = PoolVector2Array([
 static func get_half_offset(map_cell: Vector2, half_offset_type: int) -> Vector2:
 	return HALF_OFFSETS[half_offset_type * 4 + posmod(map_cell.x, 2) + posmod(map_cell.y, 2) * 2]
 
-class DrawingSettings:
+class Settings:
+	const __plugin_settings_section = "enchanced_tile_map_editor/"
+
 	var display_grid_enabled: bool
 	var cursor_color: Color
+	var selection_color: Color
 	var drawn_cells_color: Color
 	var grid_color: Color
 	var axis_color: Color
 	var axis_fragment_radius: int
 	var grid_fragment_radius: int setget __set_grid_fragment_radius
 	var grid_fragment_radius_squared: int
+	
+	signal settings_changed
+	
+	var __editor_settings: EditorSettings
+	var __editor_settings_registry: Array
+	var __project_settings_registry: Array
+	
+	func _init(editor_settings: EditorSettings) -> void:
+		__editor_settings = editor_settings
+		__register_editor_setting("display_grid_enabled", "editors/tile_map/display_grid")
+		__register_editor_setting("grid_color", "editors/tile_map/grid_color")
+		__register_editor_setting("axis_color", "editors/tile_map/axis_color")
+		__register_project_setting("cursor_color", "cursor_color", TYPE_COLOR, Color(1, 0.5, 0.25, 0.5))
+		__register_project_setting("selection_color", "selection_color", TYPE_COLOR, Color(0.2, 0.8, 1, 0.4))
+		__register_project_setting("drawn_cells_color", "drawn_cells_color", TYPE_COLOR, Color(1, 0.5, 0.25, 0.25))
+		__register_project_setting("grid_fragment_radius", "grid_fragment_radius", TYPE_INT, 10)
+		__register_project_setting("axis_fragment_radius", "axis_fragment_radius", TYPE_INT, 20)
+	
+	func __register_editor_setting(property_name: String, setting_path: String) -> void:
+		__editor_settings_registry.append({ property_name = property_name, setting_path = setting_path })
+	
+	func __register_project_setting(property_name: String, setting_path_in_plugin_section: String, setting_type: int, default_value) -> void:
+		__project_settings_registry.append({ property_name = property_name, setting_path_in_plugin_section = setting_path_in_plugin_section, setting_type = setting_type, default_value = default_value })
+
 	func __set_grid_fragment_radius(value: int) -> void:
 		grid_fragment_radius = value
 		grid_fragment_radius_squared = value * value
 
-class ValueHolder:
-	var value setget __set_value
-	func __set_value(v) -> void:
-		if v == value:
-			return
-		value = v
-		emit_signal("value_changed")
-	signal value_changed
+	func rescan_all_settings() -> void:
+		var settings_changed: bool
+		settings_changed = true if __rescan_project_settings() else settings_changed
+		settings_changed = true if __rescan_editor_settings() else settings_changed
+		if settings_changed:
+			emit_signal("settings_changed")
+
+	func rescan_project_settings() -> void:
+		if __rescan_project_settings():
+			emit_signal("settings_changed")
+	func __rescan_project_settings() -> bool:
+		var settings_changed: bool
+		var need_save_project_settings: bool
+		for setting in __project_settings_registry:
+			var setting_path = __plugin_settings_section + setting.setting_path_in_plugin_section
+			if ProjectSettings.has_setting(setting_path):
+				var value = ProjectSettings.get_setting(setting_path)
+				if value != get(setting.property_name):
+					settings_changed = true
+					set(setting.property_name, value)
+			else:
+				ProjectSettings.set_setting(setting_path, setting.default_value)
+				ProjectSettings.add_property_info({
+					"name": setting_path,
+					"type": setting.setting_type,
+					# "hint": PROPERTY_HINT_COL,
+					# "hint_string": "Color of cursor"
+					})
+				ProjectSettings.set_initial_value(setting_path, setting.default_value)
+				need_save_project_settings = true
+		if need_save_project_settings:
+			var err = ProjectSettings.save()
+			if err: push_error("Can't save project settings")
+		return settings_changed
+	
+	func rescan_editor_settings() -> void:
+		if __rescan_editor_settings():
+			emit_signal("settings_changed")
+	func __rescan_editor_settings() -> bool:
+		var settings_changed: bool
+		for setting in __editor_settings_registry:
+			var value = __editor_settings.get_setting(setting.setting_path)
+			if value != get(setting.property_name):
+				settings_changed = true
+				set(setting.property_name, value)
+		return settings_changed
+
+
 
 class Pattern:
 	var size: Vector2
@@ -131,7 +209,29 @@ class Pattern:
 #			__temp_map_cell_data[data_offset] = data[data_address + data_offset]
 #		return __temp_map_cell_data
 
+static func draw_axis_fragment(cell: Vector2, overlay: Control, half_offset_type: int, settings: Settings):
+	var axis_color: Color = settings.axis_color
+	var cell_position: Vector2
+	for i in settings.axis_fragment_radius + 1:
+		axis_color.a = settings.axis_color.a * (1 - float(i) / settings.axis_fragment_radius)
+		var direction = Vector2.RIGHT
+		for r in 4:
+			cell_position = cell + direction * i
+			cell_position += get_half_offset(cell_position, half_offset_type)
+			overlay.draw_line(cell_position, cell_position + direction, axis_color)
+			direction = direction.tangent()
+
 # working with tilemaps
+
+const __right_twice = Vector2.RIGHT * 2
+const __down_twice = Vector2.DOWN * 2
+static func get_cell_base_transform(tile_map: TileMap) -> Transform2D:
+	# hack to skip half-offsetted row or column
+	var zero: Vector2 = tile_map.map_to_world(Vector2.ZERO)
+	return Transform2D(
+		(tile_map.map_to_world(__right_twice) - zero) / 2,
+		(tile_map.map_to_world(__down_twice)  - zero) / 2,
+		zero)
 
 static func copy_cell(
 	source: TileMap, source_cell: Vector2,

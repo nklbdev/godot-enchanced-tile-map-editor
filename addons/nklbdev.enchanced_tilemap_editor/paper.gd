@@ -1,4 +1,6 @@
 extends Object
+# TODO оптимизировать работу с "бумагой", чтобы при работе с инструментом
+# не перерисовывать все заново на каждом движении
 
 const Iterators = preload("iterators.gd")
 
@@ -14,13 +16,45 @@ const QUAD = PoolVector2Array([
 
 const EMPTY_CELL_DATA: PoolIntArray = PoolIntArray([-1])
 
+#signal changes_committed(backup)
+#signal changes_reset(backup)
+
+var _is_input_freezed: bool
+var _adjustments: Array = [ToolButton.new()]
+func get_adjustments() -> Array: # of Control
+	return _adjustments
+
+var pattern_offset: Vector2
+var half_offset_type: int setget , __get_half_offset_type
+func __get_half_offset_type() -> int:
+	return __tile_map.cell_half_offset
+
 var __tile_map: TileMap
 var __backup: Dictionary
 var __previous_data_for_update_bitmask_area: Array
 
-func _init(tile_map: TileMap) -> void:
-	__tile_map = tile_map
+func has_changes() -> bool:
+	return not __backup.empty()
+
+func is_cell_changed(map_cell: Vector2) -> bool:
+	return __backup.has(map_cell)
+
+func _init() -> void:
+	_adjustments[0].icon = preload("res://addons/nklbdev.enchanced_tilemap_editor/icons/paint_tool_contour.svg")
 	__previous_data_for_update_bitmask_area.resize(9)
+
+func process_input_event_key(event: InputEventKey) -> bool:
+#	print("paper is indifferent")
+	return false
+
+func set_up(tile_map: TileMap) -> void:
+	assert(__tile_map == null)
+	__tile_map = tile_map
+
+func tear_down() -> void:
+	__backup.clear()
+	__tile_map = null
+	pass
 
 func get_map_cell_data(map_cell: Vector2, original: bool = false) -> PoolIntArray:
 	return __backup.get(map_cell, __get_current_map_cell_data(map_cell)) \
@@ -94,11 +128,21 @@ func update_bitmask_region(start: Vector2 = Vector2.ZERO, end: Vector2 = Vector2
 			__backup[map_cell] = previous_data
 		index += 1
 
-func commit_changes():
+func commit_changes() -> void:
 	# Create undoredo
+#	emit_signal("changes_committed", __backup)
 	__backup.clear()
 
-func reset_changes():
+func reset_map_cell(map_cell: Vector2) -> void:
+	if map_cell in __backup:
+		var data = __backup[map_cell]
+		if data[0] == TileMap.INVALID_CELL:
+			__tile_map.set_cellv(map_cell, data[0])
+		else:
+			__tile_map.set_cellv(map_cell, data[0], data[1] & CELL_X_FLIPPED, data[1] & CELL_Y_FLIPPED, data[1] & CELL_TRANSPOSED, Vector2(data[2], data[3]))
+		__backup.erase(map_cell)
+
+func reset_changes() -> void:
 	for map_cell in __backup:
 		# code duplication from set_cell_data for more performance
 		var data = __backup[map_cell]
@@ -112,11 +156,11 @@ func get_tile_set() -> TileSet:
 	return __tile_map.tile_set
 
 
-func get_half_offset() -> int:
-	return __tile_map.cell_half_offset
 
-
-
+func freeze_input() -> void:
+	_is_input_freezed = true
+func resume_input() -> void:
+	_is_input_freezed = false
 
 
 

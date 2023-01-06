@@ -2,7 +2,7 @@ extends Control
 
 const TreeBuilder = preload("../tree_builder.gd")
 
-var __tile_set: TileSet
+var __tile_map: TileMap
 var __item_list_slider: HSlider = HSlider.new()
 var __item_list: ItemList = ItemList.new()
 
@@ -17,13 +17,15 @@ func _init() -> void:
 	__item_list_slider.value = 0.5
 	__item_list.connect("gui_input", self, "__on_item_list_gui_input")
 
-func set_tile_set(tile_set: TileSet) -> void:
+func set_up(tile_map: TileMap) -> void:
+	__tile_map = tile_map
+	_after_set_up()
+
+func tear_down() -> void:
+	_before_tear_down()
 	__item_list.clear()
-	_on_clear()
-	__tile_set = tile_set
-	if not tile_set:
-		return
-	_on_fill(tile_set)
+	__tile_map = null
+
 
 func unselect() -> void:
 	__item_list.unselect_all()
@@ -40,10 +42,10 @@ func _add_item(text: String, icon: Texture, metadata) -> void:
 func _on_unselect() -> void:
 	pass
 
-func _on_fill(tile_set: TileSet) -> void:
+func _after_set_up() -> void:
 	pass
 
-func _on_clear() -> void:
+func _before_tear_down() -> void:
 	pass
 
 func _on_item_list_item_selected(index: int, metadata) -> void:
