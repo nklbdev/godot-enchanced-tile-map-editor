@@ -3,10 +3,7 @@ extends Object
 # не перерисовывать все заново на каждом движении
 
 const Iterators = preload("iterators.gd")
-
-const CELL_X_FLIPPED = 1
-const CELL_Y_FLIPPED = 2
-const CELL_TRANSPOSED = 4
+const Common = preload("common.gd")
 
 const QUAD = PoolVector2Array([
 	Vector2.LEFT + Vector2.UP,   Vector2.UP,   Vector2.RIGHT + Vector2.UP,
@@ -16,20 +13,50 @@ const QUAD = PoolVector2Array([
 
 const EMPTY_CELL_DATA: PoolIntArray = PoolIntArray([-1])
 
+class RulerGridMap:
+	extends TileMap
+	
+	const Common = preload("common.gd")
+	
+	var cell_half_offset_type: Common.CellHalfOffsetType
+	var size: Vector2
+	var linear_size: Vector2
+	var center_offset: Vector2
+	var linear_growth: float
+	var has_offsetted_cell_lines: bool
+	var has_offsetted_pattern_lines: bool
+
+	func _init() -> void:
+		connect("settings_changed", self, "__on_settings_changed")
+		__on_settings_changed()
+
+	func __on_settings_changed() -> void:
+		cell_half_offset_type = Common.CELL_HALF_OFFSET_TYPES[cell_half_offset]
+		var used_rect: Rect2 = get_used_rect()
+		assert(used_rect.position == Vector2.ZERO)
+		size = used_rect.size
+		linear_size = cell_half_offset_type.conv(size)
+		has_offsetted_cell_lines = linear_size.y > 1
+		has_offsetted_pattern_lines = int(linear_size.y) & 1
+		linear_growth = (int(has_offsetted_cell_lines) + int(has_offsetted_pattern_lines)) * 0.5 * cell_half_offset_type.offset_sign
+		center_offset = (Vector2.ONE - linear_size + Vector2.RIGHT * linear_growth) / 2
+
 #signal changes_committed(backup)
 #signal changes_reset(backup)
+signal after_set_up()
+signal before_tear_down()
+signal tile_map_settings_changed()
+signal tile_set_settings_changed()
 
 var _is_input_freezed: bool
-var _adjustments: Array = [ToolButton.new()]
-func get_adjustments() -> Array: # of Control
-	return _adjustments
 
-var pattern_offset: Vector2
-var half_offset_type: int setget , __get_half_offset_type
-func __get_half_offset_type() -> int:
+func get_cell_half_offset_type() -> int:
+	assert(__tile_map)
 	return __tile_map.cell_half_offset
 
 var __tile_map: TileMap
+var __ruler_grid_map: RulerGridMap = RulerGridMap.new()
+var __tile_set: TileSet
 var __backup: Dictionary
 var __previous_data_for_update_bitmask_area: Array
 
@@ -40,52 +67,44 @@ func is_cell_changed(map_cell: Vector2) -> bool:
 	return __backup.has(map_cell)
 
 func _init() -> void:
-	_adjustments[0].icon = preload("res://addons/nklbdev.enchanced_tilemap_editor/icons/paint_tool_contour.svg")
+	__ruler_grid_map.cell_size = Vector2.ONE
 	__previous_data_for_update_bitmask_area.resize(9)
 
 func process_input_event_key(event: InputEventKey) -> bool:
-#	print("paper is indifferent")
 	return false
 
 func set_up(tile_map: TileMap) -> void:
 	assert(__tile_map == null)
 	__tile_map = tile_map
+	__tile_map.connect("settings_changed", self, "__on_tile_map_settings_changed")
+	__ruler_grid_map.cell_half_offset = __tile_map.cell_half_offset
+	__tile_set = __tile_map.tile_set
+	if __tile_set:
+		__tile_set.connect("changed", self, "__on_tile_set_settings_changed")
+	emit_signal("after_set_up")
 
 func tear_down() -> void:
+	assert(__tile_map)
+	emit_signal("before_tear_down")
 	__backup.clear()
+	if __tile_set:
+		__tile_set.disconnect("changed", self, "__on_tile_set_settings_changed")
+	__tile_map.disconnect("settings_changed", self, "__on_tile_map_settings_changed")
 	__tile_map = null
-	pass
+
+func __on_tile_map_settings_changed() -> void:
+	__ruler_grid_map.cell_half_offset = __tile_map.cell_half_offset
+	if __tile_set != __tile_map.tile_set:
+		if __tile_set:
+			__tile_set.disconnect("changed", self, "__on_tile_set_settings_changed")
+		__tile_set = __tile_map.tile_set
+		if __tile_set:
+			__tile_set.connect("changed", self, "__on_tile_set_settings_changed")
+	emit_signal("tile_map_settings_changed")
 
 func get_map_cell_data(map_cell: Vector2, original: bool = false) -> PoolIntArray:
-	return __backup.get(map_cell, __get_current_map_cell_data(map_cell)) \
-		if original else __get_current_map_cell_data(map_cell)
-
-func __get_current_map_cell_data(map_cell: Vector2) -> PoolIntArray:
-	# 0 - tile_id
-	# 1 - transform
-	# 2 - autotile_coord.x
-	# 3 - autotile_coord.y
-	var tile_id: int = __tile_map.get_cellv(map_cell)
-	var data = PoolIntArray()
-	if tile_id < 0:
-		data.resize(1)
-		data[0] = tile_id
-		return data
-	data.resize(4)
-	data[0] = tile_id
-	var x: int = map_cell.x
-	var y: int = map_cell.y
-	data[1] = 0
-	if __tile_map.is_cell_x_flipped(x, y):
-		data[1] |= CELL_X_FLIPPED
-	if __tile_map.is_cell_y_flipped(x, y):
-		data[1] |= CELL_Y_FLIPPED
-	if __tile_map.is_cell_transposed(x, y):
-		data[1] |= CELL_TRANSPOSED
-	var autotile_coord = __tile_map.get_cell_autotile_coord(x, y)
-	data[2] = autotile_coord.x
-	data[3] = autotile_coord.y
-	return data
+	return __backup.get(map_cell, Common.get_map_cell_data(__tile_map, map_cell)) \
+		if original else Common.get_map_cell_data(__tile_map, map_cell)
 
 func set_map_cell_data(map_cell: Vector2, data: PoolIntArray) -> void:
 	if not __backup.has(map_cell):
@@ -93,7 +112,7 @@ func set_map_cell_data(map_cell: Vector2, data: PoolIntArray) -> void:
 	if data[0] == TileMap.INVALID_CELL:
 		__tile_map.set_cellv(map_cell, data[0])
 	else:
-		__tile_map.set_cellv(map_cell, data[0], data[1] & CELL_X_FLIPPED, data[1] & CELL_Y_FLIPPED, data[1] & CELL_TRANSPOSED, Vector2(data[2], data[3]))
+		__tile_map.set_cellv(map_cell, data[0], data[1] & Common.CELL_X_FLIPPED, data[1] & Common.CELL_Y_FLIPPED, data[1] & Common.CELL_TRANSPOSED, Vector2(data[2], data[3]))
 
 func update_bitmask_area(map_cell: Vector2) -> void:
 	for i in range(9):
@@ -139,7 +158,7 @@ func reset_map_cell(map_cell: Vector2) -> void:
 		if data[0] == TileMap.INVALID_CELL:
 			__tile_map.set_cellv(map_cell, data[0])
 		else:
-			__tile_map.set_cellv(map_cell, data[0], data[1] & CELL_X_FLIPPED, data[1] & CELL_Y_FLIPPED, data[1] & CELL_TRANSPOSED, Vector2(data[2], data[3]))
+			__tile_map.set_cellv(map_cell, data[0], data[1] & Common.CELL_X_FLIPPED, data[1] & Common.CELL_Y_FLIPPED, data[1] & Common.CELL_TRANSPOSED, Vector2(data[2], data[3]))
 		__backup.erase(map_cell)
 
 func reset_changes() -> void:
@@ -149,11 +168,20 @@ func reset_changes() -> void:
 		if data[0] == TileMap.INVALID_CELL:
 			__tile_map.set_cellv(map_cell, data[0])
 		else:
-			__tile_map.set_cellv(map_cell, data[0], data[1] & CELL_X_FLIPPED, data[1] & CELL_Y_FLIPPED, data[1] & CELL_TRANSPOSED, Vector2(data[2], data[3]))
+			__tile_map.set_cellv(map_cell, data[0], data[1] & Common.CELL_X_FLIPPED, data[1] & Common.CELL_Y_FLIPPED, data[1] & Common.CELL_TRANSPOSED, Vector2(data[2], data[3]))
 	__backup.clear()
 
 func get_tile_set() -> TileSet:
 	return __tile_map.tile_set
+
+func get_cell_half_offset() -> int:
+	return __tile_map.cell_half_offset
+
+func get_used_rect() -> Rect2:
+	return __tile_map.get_used_rect()
+
+func get_ruler_grid_map() -> RulerGridMap:
+	return __ruler_grid_map
 
 
 
@@ -174,21 +202,21 @@ func resume_input() -> void:
 
 
 
-static func create_cell_data(tile_id: int, cell_x_flipped: bool = false, cell_y_flipped: bool = false, cell_transposed: bool = false, subtile_coord: Vector2 = Vector2.ZERO) -> PoolIntArray:
-	var data = PoolIntArray()
-	if tile_id < 0:
-		data.resize(1)
-		data[0] = tile_id
-		return data
-	data.resize(4)
-	data[0] = tile_id
-	data[1] = 0
-	if cell_x_flipped:
-		data[1] |= CELL_X_FLIPPED
-	if cell_y_flipped:
-		data[1] |= CELL_Y_FLIPPED
-	if cell_transposed:
-		data[1] |= CELL_TRANSPOSED
-	data[2] = subtile_coord.x
-	data[3] = subtile_coord.y
-	return data
+#static func create_cell_data(tile_id: int, cell_x_flipped: bool = false, cell_y_flipped: bool = false, cell_transposed: bool = false, subtile_coord: Vector2 = Vector2.ZERO) -> PoolIntArray:
+#	var data = PoolIntArray()
+#	if tile_id < 0:
+#		data.resize(1)
+#		data[0] = tile_id
+#		return data
+#	data.resize(4)
+#	data[0] = tile_id
+#	data[1] = 0
+#	if cell_x_flipped:
+#		data[1] |= CELL_X_FLIPPED
+#	if cell_y_flipped:
+#		data[1] |= CELL_Y_FLIPPED
+#	if cell_transposed:
+#		data[1] |= CELL_TRANSPOSED
+#	data[2] = subtile_coord.x
+#	data[3] = subtile_coord.y
+#	return data

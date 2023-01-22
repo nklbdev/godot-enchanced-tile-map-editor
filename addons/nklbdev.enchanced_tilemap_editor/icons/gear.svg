@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   height="16"
+   viewBox="0 0 16 16"
+   width="16"
+   version="1.1"
+   id="svg10154"
+   sodipodi:docname="gear.svg"
+   inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs10158" />
+  <sodipodi:namedview
+     id="namedview10156"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="true"
+     inkscape:zoom="45.387417"
+     inkscape:cx="8.4164297"
+     inkscape:cy="8.1630555"
+     inkscape:window-width="2400"
+     inkscape:window-height="1271"
+     inkscape:window-x="3191"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg10154">
+    <inkscape:grid
+       type="xygrid"
+       id="grid10644" />
+  </sodipodi:namedview>
+  <path
+     id="path10152"
+     style="fill:#e0e0e0;fill-opacity:1"
+     d="M 7 1 L 6.4355469 3.2578125 C 6.1991173 3.3336633 5.9686532 3.4270196 5.7460938 3.5371094 L 3.7578125 2.34375 L 2.34375 3.7578125 L 3.5390625 5.7519531 C 3.4271527 5.9730827 3.3318362 6.2022304 3.2539062 6.4375 L 1 7 L 1 8 L 1 9 L 3.2539062 9.5625 C 3.3318362 9.7977696 3.4271527 10.026917 3.5390625 10.248047 L 2.34375 12.242188 L 3.7578125 13.65625 L 5.7460938 12.462891 C 5.9686532 12.572981 6.1991173 12.666337 6.4355469 12.742188 L 7 15 L 9 15 L 9.5625 12.746094 C 9.7977696 12.668164 10.026917 12.572846 10.248047 12.460938 L 12.242188 13.65625 L 13.65625 12.242188 L 12.462891 10.251953 C 12.572891 10.030023 12.666248 9.8002227 12.742188 9.5644531 L 15 9 L 15 8 L 15 7 L 12.742188 6.4355469 C 12.666248 6.1997773 12.572891 5.9699765 12.462891 5.7480469 L 13.65625 3.7578125 L 12.242188 2.34375 L 10.248047 3.5390625 C 10.026917 3.4271527 9.7977696 3.3318362 9.5625 3.2539062 L 9 1 L 7 1 z M 8 6 C 9.1045978 6.0000096 10 6.8954322 10 8 C 10 9.1045678 9.1045978 9.9999904 8 10 C 6.8954322 10 6.0000096 9.1045978 6 8 C 6.0000096 6.8954022 6.8954322 6 8 6 z " />
+</svg>

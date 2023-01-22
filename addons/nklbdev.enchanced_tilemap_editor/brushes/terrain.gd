@@ -1,27 +1,27 @@
-extends "_base.gd"
-
-func _init(settings: Common.Settings).(settings) -> void: pass
-
-
-
-
-func _paint_hex_cell(hex_cell: Vector2, paper: Paper) -> void:
-	assert(false)
-
-func _paint_tet_cell(tet_cell: Vector2, paper: Paper) -> void:
-	assert(false)
-
-func _paint_map_cell(map_cell: Vector2, paper: Paper) -> void:
-	assert(false)
-
-func _paint_pat_cell(pat_cell: Vector2, paper: Paper) -> void:
-	assert(false)
-
-
-
-func _get_pat_cell(world_position: Vector2, paper: Paper) -> Vector2:
-	assert(false)
-	return Vector2.ZERO
+#extends "_base.gd"
+#
+#func _init().() -> void: pass
+#
+#
+#
+#
+#func _paint_hex_cell(hex_cell: Vector2, paper: Paper) -> void:
+#	assert(false)
+#
+#func _paint_tet_cell(tet_cell: Vector2, paper: Paper) -> void:
+#	assert(false)
+#
+#func _paint_map_cell(map_cell: Vector2, paper: Paper) -> void:
+#	assert(false)
+#
+#func _paint_pat_cell(pat_cell: Vector2, paper: Paper) -> void:
+#	assert(false)
+#
+#
+#
+#func _get_pat_cell(world_position: Vector2, paper: Paper) -> Vector2:
+#	assert(false)
+#	return Vector2.ZERO
 
 
 #func paint(paper: Paper, cell: Vector2) -> void:

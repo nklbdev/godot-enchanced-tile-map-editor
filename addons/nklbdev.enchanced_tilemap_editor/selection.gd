@@ -1,6 +1,6 @@
 extends "paper.gd"
 
-const Common = preload("common.gd")
+const Pattern = preload("pattern.gd")
 
 const COMBINE_OPERATIONS_DESCRIPTIONS: PoolStringArray = PoolStringArray([
 	"Replacement", "Union", "Intersection", "Subtraction"])
@@ -13,14 +13,16 @@ var __image: Image
 var __texture: ImageTexture
 var __combine_operation_option_button: OptionButton
 
+signal pattern_copied(pattern)
+
 func get_selection_map() -> TileMap:
 	return __selection_map
 
 func get_selection_operand_map() -> TileMap:
 	return __selection_operand_map
 
-func _init(settings: Common.Settings) -> void:
-	__settings = settings
+func _init() -> void:
+	__settings = Common.get_static(Common.Statics.SETTINGS)
 	__settings.connect("settings_changed", self, "__apply_settings")
 
 	__image = Image.new()
@@ -41,7 +43,6 @@ func _init(settings: Common.Settings) -> void:
 	__selection_operand_map = __selection_map.duplicate(0)
 	
 	__combine_operation_option_button = __create_combine_operation_option_button()
-	_adjustments.append(__combine_operation_option_button)
 	
 	__apply_settings()
 	__reset_modifiers()
@@ -51,7 +52,7 @@ func __reset_modifiers() -> void:
 
 func __create_combine_operation_option_button() -> OptionButton:
 	var button: OptionButton = OptionButton.new()
-	var texture: Texture = preload("res://addons/nklbdev.enchanced_tilemap_editor/icons/paint_tool_contour.svg")
+	var texture: Texture = Common.get_icon("paint_tool_contour")
 	button.add_icon_item(texture, "Auto", 1000)
 	for id in COMBINE_OPERATIONS_DESCRIPTIONS.size():
 		button.add_icon_item(texture, COMBINE_OPERATIONS_DESCRIPTIONS[id], id)
@@ -60,7 +61,50 @@ func __create_combine_operation_option_button() -> OptionButton:
 func process_input_event_key(event: InputEventKey) -> bool:
 	if _is_input_freezed:
 		return false
-	if event.scancode & Common.ALL_MODIFIER_KEYS > 0:
+	if (event.control or event.command) and not event.alt:
+		if event.scancode == KEY_C or event.scancode == KEY_X:
+			var cut: bool = event.scancode == KEY_X
+			var used_rect: Rect2 = __selection_map.get_used_rect()
+			if used_rect.has_no_area():
+				return false
+			
+			var data: PoolIntArray
+			data.resize(used_rect.size.x * used_rect.size.y * 4)
+			var cell: Vector2
+			var i: int
+			for y in used_rect.size.y: for x in used_rect.size.x:
+				cell = used_rect.position + Vector2(x, y)
+				if __selection_map.get_cellv(cell) < 0:
+					data[i] = TileMap.INVALID_CELL
+				else:
+					var d: PoolIntArray = Common.get_map_cell_data(__tile_map_to_select, cell)
+					data[i] = d[0]
+					if d[0] >= 0:
+						data[i + 1] = d[1]
+						data[i + 2] = d[2]
+						data[i + 3] = d[3]
+						if cut:
+							__tile_map_to_select.set_cellv(cell, TileMap.INVALID_CELL)
+				i += 4
+			if cut:
+				__selection_map.clear()
+			var pattern = Pattern.new(used_rect.size, data)
+			emit_signal("pattern_copied", pattern)
+			return true
+		elif event.scancode == KEY_V:
+			pass
+	elif event.scancode == KEY_DELETE and not(event.control or event.alt or event.shift or event.meta):
+		var used_rect: Rect2 = __selection_map.get_used_rect()
+		if used_rect.has_no_area():
+			return false
+		var cell: Vector2
+		for y in used_rect.size.y: for x in used_rect.size.x:
+			cell = used_rect.position + Vector2(x, y)
+			if __selection_map.get_cellv(cell) >= 0:
+				__tile_map_to_select.set_cellv(cell, TileMap.INVALID_CELL)
+		__selection_map.clear()
+		return true
+	elif event.scancode & Common.ALL_MODIFIER_KEYS > 0:
 		__rescan_modifiers()
 		return true
 	return false
@@ -85,6 +129,8 @@ func set_up(tile_map: TileMap) -> void:
 
 
 func tear_down() -> void:
+	if __tile_map_to_select:
+		__tile_map_to_select.disconnect("settings_changed", self, "__apply_tile_map_to_select_settings")
 	__tile_map_to_select = null
 	__selection_map.clear()
 	__selection_operand_map.clear()
@@ -102,17 +148,13 @@ var __auto_operation_type: int setget __set_auto_operation_type
 func __set_auto_operation_type(value: int) -> void:
 	if value < 0 or value > 4:
 		return
-#	if __auto_operation_type == value:
-#		return
 	__auto_operation_type = value
 	__combine_operation_option_button.set_item_icon(0, __combine_operation_option_button.get_item_icon(value + 1))
 	__combine_operation_option_button.set_item_text(0, "Auto: %s" % [__combine_operation_option_button.get_item_text(value + 1)])
-#	void set_item_tooltip(idx: int, tooltip: String)
 
 func commit_changes() -> void:
 	.commit_changes()
 	var operation_type = __combine_operation_option_button.get_selected_id()
-#	print(operation_type)
 	if operation_type == 1000:
 		operation_type = __auto_operation_type
 	match operation_type:
@@ -131,13 +173,6 @@ func commit_changes() -> void:
 			for cell in __selection_operand_map.get_used_cells():
 				__selection_map.set_cellv(cell, TileMap.INVALID_CELL)
 	__selection_operand_map.clear()
-#	print("commit and rescan")
-#	__rescan_modifiers()
-
-#func reset_changes() -> void:
-#	.reset_changes()
-#	print("reset and rescan")
-#	__rescan_modifiers()
 
 func freeze_input() -> void:
 	__rescan_modifiers()

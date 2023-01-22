@@ -2,7 +2,7 @@ extends Object
 
 const Iterators = preload("iterators.gd")
 
-const plugin_folder = "res://addons/nklbdev.enchanced_tilemap_editor/"
+const PLUGIN_FOLDER = "res://addons/nklbdev.enchanced_tilemap_editor/"
 
 enum DrawingTypes {
 	PASTE,
@@ -64,6 +64,14 @@ enum PatternType {
 	BACKGROUND = 2
 }
 
+static func limit_area(size: Vector2, area_limit: float) -> Vector2:
+	var area: float = abs(size.x * size.y)
+	if area <= area_limit:
+		return size
+	var abs_aspect = abs(size.aspect())
+	return Vector2(sqrt(area_limit * abs_aspect) * sign(size.x), sqrt(area_limit / abs_aspect) * sign(size.y))
+
+
 const MODIFIER_KEYS: PoolIntArray = PoolIntArray([
 	KEY_CONTROL, KEY_ALT, KEY_SHIFT, KEY_META
 ])
@@ -75,7 +83,7 @@ static func get_current_modifiers() -> int:
 			modifiers |= key
 	return modifiers
 
-const HALF_OFFSETS: PoolVector2Array = PoolVector2Array([
+const CELL_HALF_OFFSETS: PoolVector2Array = PoolVector2Array([
 	#TileMap.HALF_OFFSET_X = 0
 	Vector2( 0,   0), Vector2( 0,    0  ),
 	Vector2( 0.5, 0), Vector2( 0.5,  0  ),
@@ -93,11 +101,26 @@ const HALF_OFFSETS: PoolVector2Array = PoolVector2Array([
 	Vector2( 0,   0), Vector2( 0,   -0.5),
 ])
 
-static func get_half_offset(map_cell: Vector2, half_offset_type: int) -> Vector2:
-	return HALF_OFFSETS[half_offset_type * 4 + posmod(map_cell.x, 2) + posmod(map_cell.y, 2) * 2]
+const CELL_HALF_OFFSET_SIGNS: PoolIntArray = PoolIntArray([1, 1, 0, -1, -1])
+const CELL_HALF_OFFSET_AXES: PoolVector2Array = PoolVector2Array([Vector2.RIGHT, Vector2.DOWN, Vector2.RIGHT, Vector2.RIGHT, Vector2.DOWN])
+
+static func get_cell_half_offset(map_cell: Vector2, cell_half_offset_type: int) -> Vector2:
+	return CELL_HALF_OFFSETS[cell_half_offset_type * 4 + posmod(map_cell.x, 2) + posmod(map_cell.y, 2) * 2]
+
+class ValueHolder:
+	var value setget __set_value
+	func __set_value(val) -> void:
+		if val != value:
+			value = val
+			emit_signal("value_changed")
+	signal value_changed()
+	func _init(val = null) -> void:
+		value = val
 
 class Settings:
 	const __plugin_settings_section = "enchanced_tile_map_editor/"
+
+	var __disposed: bool
 
 	var display_grid_enabled: bool
 	var cursor_color: Color
@@ -108,6 +131,7 @@ class Settings:
 	var axis_fragment_radius: int
 	var grid_fragment_radius: int setget __set_grid_fragment_radius
 	var grid_fragment_radius_squared: int
+	var drawing_area_limit: int
 	
 	signal settings_changed
 	
@@ -125,6 +149,17 @@ class Settings:
 		__register_project_setting("drawn_cells_color", "drawn_cells_color", TYPE_COLOR, Color(1, 0.5, 0.25, 0.25))
 		__register_project_setting("grid_fragment_radius", "grid_fragment_radius", TYPE_INT, 10)
 		__register_project_setting("axis_fragment_radius", "axis_fragment_radius", TYPE_INT, 20)
+		__register_project_setting("drawing_area_limit", "drawing_area_limit", TYPE_INT, 128 * 128)
+		ProjectSettings.connect("project_settings_changed", self, "__rescan_project_settings")
+		editor_settings.connect("settings_changed", self, "__rescan_editor_settings")
+		__scan_editor_settings()
+		__scan_project_settings()
+	func dispose() -> void:
+		assert(not __disposed)
+		ProjectSettings.disconnect("project_settings_changed", self, "__rescan_project_settings")
+		__editor_settings.disconnect("settings_changed", self, "__rescan_editor_settings")
+		__editor_settings = null
+		__disposed = true
 	
 	func __register_editor_setting(property_name: String, setting_path: String) -> void:
 		__editor_settings_registry.append({ property_name = property_name, setting_path = setting_path })
@@ -136,17 +171,10 @@ class Settings:
 		grid_fragment_radius = value
 		grid_fragment_radius_squared = value * value
 
-	func rescan_all_settings() -> void:
-		var settings_changed: bool
-		settings_changed = true if __rescan_project_settings() else settings_changed
-		settings_changed = true if __rescan_editor_settings() else settings_changed
-		if settings_changed:
+	func __rescan_project_settings() -> void:
+		if __scan_project_settings():
 			emit_signal("settings_changed")
-
-	func rescan_project_settings() -> void:
-		if __rescan_project_settings():
-			emit_signal("settings_changed")
-	func __rescan_project_settings() -> bool:
+	func __scan_project_settings() -> bool:
 		var settings_changed: bool
 		var need_save_project_settings: bool
 		for setting in __project_settings_registry:
@@ -171,10 +199,10 @@ class Settings:
 			if err: push_error("Can't save project settings")
 		return settings_changed
 	
-	func rescan_editor_settings() -> void:
-		if __rescan_editor_settings():
+	func __rescan_editor_settings() -> void:
+		if __scan_editor_settings():
 			emit_signal("settings_changed")
-	func __rescan_editor_settings() -> bool:
+	func __scan_editor_settings() -> bool:
 		var settings_changed: bool
 		for setting in __editor_settings_registry:
 			var value = __editor_settings.get_setting(setting.setting_path)
@@ -183,33 +211,7 @@ class Settings:
 				set(setting.property_name, value)
 		return settings_changed
 
-
-
-class Pattern:
-	var size: Vector2
-	var offset: Vector2 setget __set_offset
-	func __set_offset(value: Vector2) -> void:
-		offset = value.posmodv(size)
-	var transform_flags: int
-	var data: Array # tile_id, transform_flags, subtile_coord.x, subtile_coord_y
-
-	func _init(size: Vector2, data: PoolIntArray) -> void:
-		assert(size.x > 0 and size.y > 0)
-		assert(data.size() == size.x * size.y * 4)
-		self.size = size
-		self.data = data
-
-	var __temp_map_cell_data: PoolIntArray = PoolIntArray([0, 0, 0, 0])
-	func get_map_cell_data(map_cell: Vector2) -> PoolIntArray:
-		var internal_map_cell = (map_cell - offset).posmodv(size)
-		var data_address = (internal_map_cell.x + internal_map_cell.y * size.x) * 4
-		return PoolIntArray(data.slice(data_address, data_address + 4))
-#		var data_address = (internal_map_cell.x + internal_map_cell.y * size.x) * 4
-#		for data_offset in 4:
-#			__temp_map_cell_data[data_offset] = data[data_address + data_offset]
-#		return __temp_map_cell_data
-
-static func draw_axis_fragment(cell: Vector2, overlay: Control, half_offset_type: int, settings: Settings):
+static func draw_axis_fragment(cell: Vector2, overlay: Control, cell_half_offset_type: int, settings: Settings):
 	var axis_color: Color = settings.axis_color
 	var cell_position: Vector2
 	for i in settings.axis_fragment_radius + 1:
@@ -217,9 +219,24 @@ static func draw_axis_fragment(cell: Vector2, overlay: Control, half_offset_type
 		var direction = Vector2.RIGHT
 		for r in 4:
 			cell_position = cell + direction * i
-			cell_position += get_half_offset(cell_position, half_offset_type)
+			cell_position += get_cell_half_offset(cell_position, cell_half_offset_type)
 			overlay.draw_line(cell_position, cell_position + direction, axis_color)
 			direction = direction.tangent()
+
+static func create_shortcut(scancode_with_modifiers: int) -> ShortCut:
+	var event = InputEventKey.new()
+	event.pressed  = true
+	event.echo     = false
+	event.unicode  = scancode_with_modifiers & KEY_CODE_MASK
+	event.scancode = scancode_with_modifiers & KEY_CODE_MASK
+	event.shift    = scancode_with_modifiers & KEY_MASK_SHIFT
+	event.alt      = scancode_with_modifiers & KEY_MASK_ALT
+	event.control  = scancode_with_modifiers & KEY_MASK_CTRL
+	event.meta     = scancode_with_modifiers & KEY_MASK_META
+	event.command  = scancode_with_modifiers & KEY_MASK_CMD
+	var shortcut = ShortCut.new()
+	shortcut.shortcut = event
+	return shortcut
 
 # working with tilemaps
 
@@ -350,8 +367,49 @@ static func get_first_key_with_value(dict: Dictionary, value, default):
 			return key
 	return default
 
+const CELL_HALF_OFFSET_TYPES: Array = [null, null, null, null, null]
+
+const __STATICS: Array = []
+enum Statics {
+	EDITOR_INTERFACE = 0
+	EDITOR_SETTINGS = 1
+	EDITOR_SCALE = 2,
+	SETTINGS = 3,
+	MAX = 4
+}
+const TILE_COLORS = PoolColorArray([
+	Color(1, 1, 0.3),     # SINGLE_TILE = 0
+	Color(0.3, 0.6, 1),   # AUTO_TILE   = 1
+	Color(0.8, 0.8, 0.8), # ATLAS_TILE  = 2
+])
+const SUBTILE_COLOR = Color(0.3, 0.7, 0.6)
+const SHADOW_COLOR = SUBTILE_COLOR * Color(1, 1, 1, 0.4)
+const SELECTED_RECT_COLOR = Color.white
+const SELECTION_RECT_COLOR = Color.lightskyblue
+
+static func set_up_statics(editor_interface: EditorInterface) -> void:
+	assert(__STATICS.size() == 0)
+	var editor_settings = editor_interface.get_editor_settings()
+	__STATICS.resize(Statics.MAX)
+	__STATICS[Statics.EDITOR_INTERFACE] = editor_interface
+	__STATICS[Statics.EDITOR_SETTINGS] = editor_settings
+	__STATICS[Statics.EDITOR_SCALE] = editor_interface.get_editor_scale()
+	__STATICS[Statics.SETTINGS] = Settings.new(editor_settings)
+	for i in 5:
+		CELL_HALF_OFFSET_TYPES[i] = CellHalfOffsetType.new(i)
+
+static func tear_down_statics() -> void:
+	assert(__STATICS.size() != 0)
+	__STATICS[Statics.SETTINGS].dispose()
+	__STATICS.clear()
+
+static func get_static(index: int):
+	return __STATICS[index]
+
+static func get_icon(icon_name: String) -> Texture:
+	return resize_texture(load("%sicons/%s.svg" % [PLUGIN_FOLDER, icon_name]), __STATICS[Statics.EDITOR_SCALE] / 4)
+
 static func resize_texture(texture: Texture, scale: float) -> Texture:
-	
 	var image = texture.get_data() as Image
 	var new_size = image.get_size() * scale
 	image.resize(round(new_size.x), round(new_size.y))
@@ -430,3 +488,51 @@ class CellFiller:
 	var position: Vector2
 	func perform() -> void:
 		pass
+
+class CellHalfOffsetType:
+	var index: int
+	var is_horizontal: bool
+	var offset_sign: int
+	var line_direction: Vector2
+	var column_direction: Vector2
+	var offset: Vector2
+	func _init(index_: int) -> void:
+		index = index_
+		is_horizontal = index == TileMap.HALF_OFFSET_X or TileMap.HALF_OFFSET_NEGATIVE_X or TileMap.HALF_OFFSET_DISABLED
+		offset_sign = -1 if index < 2 else (1 if index > 2 else 0)
+		line_direction = conv(Vector2.RIGHT)
+		column_direction = conv(Vector2.DOWN)
+		offset = line_direction * 0.5 * offset_sign
+	func conv(v: Vector2) -> Vector2:
+		return v if is_horizontal else Vector2(v.y, v.x)
+
+const CELL_X_FLIPPED: int = 1
+const CELL_Y_FLIPPED: int = 2
+const CELL_TRANSPOSED: int = 4
+
+static func get_map_cell_data(tile_map: TileMap, map_cell: Vector2) -> PoolIntArray:
+	# 0 - tile_id
+	# 1 - transform
+	# 2 - autotile_coord.x
+	# 3 - autotile_coord.y
+	var tile_id: int = tile_map.get_cellv(map_cell)
+	var data: PoolIntArray = PoolIntArray()
+	if tile_id < 0:
+		data.resize(1)
+		data[0] = tile_id
+		return data
+	data.resize(4)
+	data[0] = tile_id
+	var x: int = int(map_cell.x)
+	var y: int = int(map_cell.y)
+	data[1] = 0
+	if tile_map.is_cell_x_flipped(x, y):
+		data[1] |= CELL_X_FLIPPED
+	if tile_map.is_cell_y_flipped(x, y):
+		data[1] |= CELL_Y_FLIPPED
+	if tile_map.is_cell_transposed(x, y):
+		data[1] |= CELL_TRANSPOSED
+	var autotile_coord: Vector2 = tile_map.get_cell_autotile_coord(x, y)
+	data[2] = autotile_coord.x
+	data[3] = autotile_coord.y
+	return data
