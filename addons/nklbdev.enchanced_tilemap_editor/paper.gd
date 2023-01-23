@@ -50,10 +50,6 @@ signal tile_set_settings_changed()
 
 var _is_input_freezed: bool
 
-func get_cell_half_offset_type() -> int:
-	assert(__tile_map)
-	return __tile_map.cell_half_offset
-
 var __tile_map: TileMap
 var __ruler_grid_map: RulerGridMap = RulerGridMap.new()
 var __tile_set: TileSet

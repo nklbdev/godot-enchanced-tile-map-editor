@@ -491,20 +491,27 @@ class CellFiller:
 
 class CellHalfOffsetType:
 	var index: int
-	var is_horizontal: bool
+	var transposed: bool
 	var offset_sign: int
 	var line_direction: Vector2
 	var column_direction: Vector2
 	var offset: Vector2
 	func _init(index_: int) -> void:
 		index = index_
-		is_horizontal = index == TileMap.HALF_OFFSET_X or TileMap.HALF_OFFSET_NEGATIVE_X or TileMap.HALF_OFFSET_DISABLED
-		offset_sign = -1 if index < 2 else (1 if index > 2 else 0)
+		transposed = index in [TileMap.HALF_OFFSET_Y, TileMap.HALF_OFFSET_NEGATIVE_Y]
+		offset_sign = 1 if index < 2 else (-1 if index > 2 else 0)
 		line_direction = conv(Vector2.RIGHT)
 		column_direction = conv(Vector2.DOWN)
 		offset = line_direction * 0.5 * offset_sign
+	func get_line(cell: Vector2) -> int:
+		return int(cell.x if transposed else cell.y)
+	func get_column(cell: Vector2) -> int:
+		return int(cell.y if transposed else cell.x)
 	func conv(v: Vector2) -> Vector2:
-		return v if is_horizontal else Vector2(v.y, v.x)
+		return Vector2(v.y, v.x) if transposed else v
+	func _to_string() -> String:
+		return "%s{index: %s, transposed: %s, offset_sign: %s, line_direction: %s, column_direction: %s, offset: %s}" % \
+			[get_class(), index, transposed, offset_sign, line_direction, column_direction, offset]
 
 const CELL_X_FLIPPED: int = 1
 const CELL_Y_FLIPPED: int = 2

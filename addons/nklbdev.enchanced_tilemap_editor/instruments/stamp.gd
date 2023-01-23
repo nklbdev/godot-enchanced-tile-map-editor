@@ -28,7 +28,7 @@ func _on_moved(from_position: Vector2, previous_pattern_grid_position_cell: Vect
 			var from_map_cell: Vector2 = _ruler_grid_map.world_to_map(from_position - _pattern_grid_origin_map_cell_position)
 			var to_map_cell: Vector2 = _ruler_grid_map.world_to_map(_position - _pattern_grid_origin_map_cell_position)
 			if from_map_cell != to_map_cell:
-				__line = Algorithms.get_line(from_map_cell, to_map_cell, _cell_half_offset_type)
+				__line = Algorithms.get_line(from_map_cell, to_map_cell, _ruler_grid_map.cell_half_offset)
 				paint()
 		else:
 			if previous_pattern_grid_position_cell != _pattern_grid_position_cell:

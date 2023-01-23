@@ -26,7 +26,7 @@ func _on_moved(from_position: Vector2, previous_pattern_grid_position_cell: Vect
 	if _is_pushed:
 		if previous_pattern_grid_position_cell != _pattern_grid_position_cell:
 			if not _pattern or _pattern.size == Vector2.ONE:
-				__line = Algorithms.get_line(_pattern_grid_origin_map_cell, _pattern_grid_position_map_cell, _cell_half_offset_type)
+				__line = Algorithms.get_line(_pattern_grid_origin_map_cell, _pattern_grid_position_map_cell, _ruler_grid_map.cell_half_offset)
 			else:
 				__line = Iterators.line(Vector2.ZERO, _pattern_grid_position_cell).to_array()
 			paint()

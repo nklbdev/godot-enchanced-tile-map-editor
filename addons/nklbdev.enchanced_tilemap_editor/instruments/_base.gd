@@ -11,18 +11,11 @@ var _pattern: Pattern
 var _paper: Paper
 var _selection_map: TileMap
 var _paint_immediately_on_pushed: bool
-#var _modifiers: int
 var __paint_deferred: bool
 var _paint_invalid_cell: bool
 var _ruler_grid_map: Paper.RulerGridMap
 
 # updating on pattern or paper changed data
-var _cell_half_offset: Vector2
-var _cell_half_offset_type: int
-var _cell_half_offset_axis: Vector2
-var _is_cell_half_offset_horizontal: bool
-var _cell_half_offset_sign: int
-var _line_number_ascending_direction: Vector2
 var _lines_count_in_pattern: int
 
 # updating on instrument moved data
@@ -66,15 +59,9 @@ func __on_paper_tile_set_settings_changed() -> void:
 	pass
 
 func __update_cached_data() -> void:
+	print(_ruler_grid_map.cell_half_offset_type)
 	_pattern = _pattern_holder.value
-	_cell_half_offset_type = _paper.get_cell_half_offset_type()
-	_cell_half_offset_axis = Common.CELL_HALF_OFFSET_AXES[_cell_half_offset_type]
-	_is_cell_half_offset_horizontal = _cell_half_offset_axis.x > 0
-	_cell_half_offset_sign = Common.CELL_HALF_OFFSET_SIGNS[_cell_half_offset_type]
-	_cell_half_offset = _cell_half_offset_axis * _cell_half_offset_sign / 2
-	_line_number_ascending_direction = Vector2.ONE - _cell_half_offset_axis
-	print(_pattern.size if _pattern else Vector2.ZERO)
-	_lines_count_in_pattern = (_pattern.size.y if _is_cell_half_offset_horizontal else _pattern.size.x) if _pattern else 0
+	_lines_count_in_pattern = (_ruler_grid_map.cell_half_offset_type.conv(_pattern.size).y) if _pattern else 0
 
 var _origin: Vector2 setget _set_origin
 func _set_origin(value: Vector2) -> void:
@@ -91,7 +78,7 @@ func _set_origin(value: Vector2) -> void:
 		
 		_pattern_grid_origin_map_cell_position = _ruler_grid_map.map_to_world(_pattern_grid_origin_map_cell)
 		_pattern_grid_origin_position = _pattern_grid_origin_map_cell_position + \
-			_cell_half_offset_axis * _cell_half_offset_sign * \
+			_ruler_grid_map.cell_half_offset_type.line_direction * _ruler_grid_map.cell_half_offset_type.offset_sign * \
 			(0.5 if _lines_count_in_pattern & 1 else 0.25)
 
 var _position: Vector2 setget _set_position
@@ -195,60 +182,27 @@ func _on_paint() -> void:
 func _on_draw(overlay: Control) -> void:
 	pass
 
+func can_paint_at(map_cell: Vector2) -> bool:
+	return _selection_map == null or _selection_map.get_used_rect().has_no_area() or _selection_map.get_cellv(map_cell) == 0
+
 func paint_pattern_at(pattern_grid_cell: Vector2) -> void:
 	var pattern_positon: Vector2 = __get_pattern_position(pattern_grid_cell)
-	var not_selected = not _selection_map or _selection_map.get_used_rect().has_no_area()
 	for y in _pattern.size.y: for x in _pattern.size.x:
 		var pattern_cell: Vector2 = Vector2(x, y)
-		var data = _pattern.get_cell_data(pattern_cell)
+		var data: PoolIntArray = _pattern.get_cell_data(pattern_cell)
 		if _paint_invalid_cell or data[0] >= 0:
 			var map_cell = _ruler_grid_map.world_to_map(pattern_positon + _ruler_grid_map.map_to_world(pattern_cell))
-			if not_selected or _selection_map.get_cellv(map_cell) != TileMap.INVALID_CELL:
+			if can_paint_at(map_cell):
 				_paper.set_map_cell_data(map_cell, data)
 
 func get_pattern_cell_for_map_cell(map_cell: Vector2) -> Vector2:
-	assert(_lines_count_in_pattern > 0)
-	
-	var _line_length_in_pattern: int = _pattern.size.x if _is_cell_half_offset_horizontal else _pattern.size.y
-	if _is_cell_half_offset_horizontal:
-		var map_cell_from_grid_origin = map_cell.y - _pattern_grid_origin_map_cell.y
-		var grid_line: int = stepify(map_cell_from_grid_origin, _lines_count_in_pattern)
-		var pattern_line: int = posmod(map_cell_from_grid_origin, _lines_count_in_pattern)
-		return _ruler_grid_map.world_to_map(Vector2(
-			posmod(map_cell.x - _pattern_grid_origin_map_cell.x, _line_length_in_pattern),
-			grid_line * _lines_count_in_pattern + (grid_line & 1) * (_lines_count_in_pattern & 1) * _cell_half_offset.x +
-			pattern_line + (pattern_line & 1) * (_lines_count_in_pattern & 1) * _cell_half_offset.x))
-	else:
-		var map_cell_from_grid_origin = map_cell.x - _pattern_grid_origin_map_cell.x
-		var grid_line: int = stepify(map_cell_from_grid_origin, _lines_count_in_pattern)
-		var pattern_line: int = posmod(map_cell_from_grid_origin, _lines_count_in_pattern)
-		return _ruler_grid_map.world_to_map(Vector2(
-			grid_line * _lines_count_in_pattern + (grid_line & 1) * (_lines_count_in_pattern & 1) * _cell_half_offset.y +
-			pattern_line + (pattern_line & 1) * (_lines_count_in_pattern & 1) * _cell_half_offset.y,
-			posmod(map_cell.y - _pattern_grid_origin_map_cell.y, _line_length_in_pattern)))
-
-#	assert(_lines_count_in_pattern > 0)
-#	var grid_line = posmod((map_cell.y - _pattern_grid_origin_map_cell.y) \
-#		if _is_cell_half_offset_horizontal else \
-#		(map_cell.x - _pattern_grid_origin_map_cell.x), _lines_count_in_pattern)
-#	var pattern_line: int = posmod(pattern_line_from_origin, _lines_count_in_pattern)
-#	var pattern_offset: Vector2 = (grid_line & 1) * _cell_half_offset if (_lines_count_in_pattern & 1) else Vector2.ZERO
-#	return _ruler_grid_map.world_to_map(
-#		_line_number_ascending_direction * grid_line * _lines_count_in_pattern + pattern_offset +
-#		_line_number_ascending_direction * pattern_line + pattern_line_offset +
-#		posmod(Vector2.ONE.dot((map_cell - _pattern_grid_origin_map_cell) * _cell_half_offset_axis), pattern_line_length) * _cell_half_offset_axis
-#	)
-	
-#	var pattern_line_from_origin = Vector2.ONE.dot((map_cell - _pattern_grid_origin_map_cell) * _line_number_ascending_direction)
-#	var grid_line: int = int(floor(pattern_line_from_origin / _lines_count_in_pattern))
-#	var pattern_line: int = posmod(pattern_line_from_origin, _lines_count_in_pattern)
-#	var pattern_line_length: int = _pattern.size.x if _is_cell_half_offset_horizontal else _pattern.size.y
-#	var pattern_offset: Vector2 = (grid_line & 1) * _cell_half_offset if (_lines_count_in_pattern & 1) else Vector2.ZERO
-#	var pattern_line_offset: Vector2 = (grid_line & 1) * _cell_half_offset if (_lines_count_in_pattern & 1) else Vector2.ZERO
-#	return _ruler_grid_map.world_to_map(
-#		_line_number_ascending_direction * grid_line + pattern_offset +
-#		_line_number_ascending_direction * pattern_line + pattern_line_offset +
-#		posmod(Vector2.ONE.dot((map_cell - _pattern_grid_origin_map_cell) * _cell_half_offset_axis), pattern_line_length) * _cell_half_offset_axis)
+	return (map_cell - _pattern_grid_origin_map_cell).posmodv(_pattern.size) \
+		if _ruler_grid_map.cell_half_offset == TileMap.HALF_OFFSET_DISABLED else \
+		_ruler_grid_map.world_to_map(
+			_ruler_grid_map.map_to_world(map_cell) -
+			_pattern_grid_origin_map_cell_position -
+			(_ruler_grid_map.map_to_world(_pattern.size) if (_lines_count_in_pattern & 1) else Vector2.ZERO)) \
+			.posmodv(_pattern.size)
 
 func paint_pattern_cell_at(map_cell: Vector2) -> void:
 	if _lines_count_in_pattern > 0:
@@ -263,6 +217,4 @@ func draw_pattern_hint_at(overlay: Control, pattern_grid_cell: Vector2) -> void:
 		overlay.draw_rect(Rect2(pattern_positon + _ruler_grid_map.map_to_world(Vector2(x, y)), Vector2.ONE), __cursor_color)
 
 func __get_pattern_position(pattern_grid_cell: Vector2) -> Vector2:
-	return _pattern_grid_origin_map_cell_position + \
-		_pattern.size * pattern_grid_cell + \
-		(int(pattern_grid_cell.y if _is_cell_half_offset_horizontal else pattern_grid_cell.x) & 1) * _cell_half_offset
+	return _pattern_grid_origin_map_cell_position + _ruler_grid_map.map_to_world(pattern_grid_cell * _pattern.size)

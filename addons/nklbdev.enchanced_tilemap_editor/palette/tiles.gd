@@ -34,12 +34,12 @@ func _init(selection_paper: Selection, tiles_paper: Paper, eraser: Instrument).(
 	var tb = TB.tree(self)
 	tb.node(toolbar).with_children([
 		tb.node(toolbar.create_instrument_button("Rectangle Selection", KEY_B, "rectangle_selection", InstrumentRectangle.new(selection_pattern_holder, selection_paper, null, false))),
-		tb.node(toolbar.create_instrument_button("Same Tile Selection", KEY_B, "magic_wand", InstrumentFlood.new(selection_pattern_holder, selection_paper, null))),
+		tb.node(toolbar.create_instrument_button("Same Tile Selection", KEY_B, "magic_wand", InstrumentFlood.new(selection_pattern_holder, selection_paper, tiles_paper, null))),
 		tb.node(VSeparator.new()),
 		tb.node(toolbar.create_instrument_button("Stamp", KEY_B, "brush", InstrumentStamp.new(_pattern_holder, tiles_paper, selection_map))),
 		tb.node(toolbar.create_instrument_button("Rectangle", KEY_B, "rectangle", InstrumentRectangle.new(_pattern_holder, tiles_paper, selection_map))),
 		tb.node(toolbar.create_instrument_button("Line", KEY_B, "line", InstrumentLine.new(_pattern_holder, tiles_paper, selection_map))),
-		tb.node(toolbar.create_instrument_button("Fill", KEY_B, "bucket", InstrumentFlood.new(_pattern_holder, tiles_paper, selection_map))),
+		tb.node(toolbar.create_instrument_button("Fill", KEY_B, "bucket", InstrumentFlood.new(_pattern_holder, tiles_paper, tiles_paper, selection_map))),
 		tb.node(toolbar.create_instrument_button("Picker", KEY_B, "picker", InstrumentPicker.new(_pattern_holder, tiles_paper, selection_map))),
 		tb.node(toolbar.create_instrument_button("Eraser", KEY_B, "eraser", eraser)),
 		tb.node(VSeparator.new()),
