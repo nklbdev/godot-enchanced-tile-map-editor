@@ -2,12 +2,12 @@ extends Object
 
 const Common = preload("../common.gd")
 const Paper = preload("../paper.gd")
-const Pattern = preload("../pattern.gd")
+const Patterns = preload("../patterns.gd")
 
 var _settings: Common.Settings
 
 var _pattern_holder: Common.ValueHolder
-var _pattern: Pattern
+var _pattern: Patterns.Pattern
 var _paper: Paper
 var _selection_map: TileMap
 var _paint_immediately_on_pushed: bool

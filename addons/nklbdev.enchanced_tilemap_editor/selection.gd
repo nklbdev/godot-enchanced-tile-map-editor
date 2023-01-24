@@ -1,6 +1,6 @@
 extends "paper.gd"
 
-const Pattern = preload("pattern.gd")
+const Patterns = preload("patterns.gd")
 
 const COMBINE_OPERATIONS_DESCRIPTIONS: PoolStringArray = PoolStringArray([
 	"Replacement", "Union", "Intersection", "Subtraction"])
@@ -88,7 +88,11 @@ func process_input_event_key(event: InputEventKey) -> bool:
 				i += 4
 			if cut:
 				__selection_map.clear()
-			var pattern = Pattern.new(used_rect.size, data)
+			var pattern: Patterns.Pattern = Patterns.Pattern.new(used_rect.size, data)
+			var serialized_pattern: String = Patterns.serialize(pattern)
+			OS.clipboard = serialized_pattern
+			pattern = Patterns.deserialize(serialized_pattern)
+			
 			emit_signal("pattern_copied", pattern)
 			return true
 		elif event.scancode == KEY_V:

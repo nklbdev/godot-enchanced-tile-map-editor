@@ -1,7 +1,7 @@
 extends "_subpalette.gd"
 
 const TB = preload("../tree_builder.gd")
-const Pattern = preload("../pattern.gd")
+const Patterns = preload("../patterns.gd")
 
 class ClippingContentPanel:
 	extends Panel
@@ -27,7 +27,7 @@ var __center_view_button: ToolButton
 var __content_zoom: float = 1.0
 var EDSCALE: float
 var _previous_selected_tile: Tile
-var _selected_pattern: Pattern
+var _selected_pattern: Patterns.Pattern
 
 func _init(title: String, icon_name: String).(title, icon_name) -> void:
 	EDSCALE = Common.get_static(Common.Statics.EDITOR_SCALE)
@@ -223,6 +223,6 @@ func _on_tile_region_selected(region: Rect2, tile: Tile) -> void:
 			data[i + 2] = x
 			data[i + 3] = y
 			i += 4
-	_selected_pattern = Pattern.new(region.size, data)
+	_selected_pattern = Patterns.Pattern.new(region.size, data)
 	emit_signal("selected", _selected_pattern)
 	pass

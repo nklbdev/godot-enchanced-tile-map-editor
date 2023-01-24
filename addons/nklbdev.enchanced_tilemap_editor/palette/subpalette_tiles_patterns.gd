@@ -1,5 +1,7 @@
 extends "_list_subpalette.gd"
 
+const Patterns = preload("../patterns.gd")
+
 var __cache: Dictionary
 
 func _init().("Patterns", "pattern") -> void:
@@ -24,4 +26,5 @@ func __on_item_list_gui_input(event: InputEvent) -> void:
 						_item_list.select(item_index)
 						return
 				_item_list.add_item(clipboard_content)
+				_item_list.set_item_metadata(_item_list.get_item_count() - 1, Patterns.deserialize(clipboard_content))
 				_item_list.select(_item_list.get_item_count() - 1)

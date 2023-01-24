@@ -4,7 +4,7 @@ const TB = preload("../tree_builder.gd")
 
 const Paper = preload("../paper.gd")
 const Selection = preload("../selection.gd")
-const Pattern = preload("../pattern.gd")
+const Patterns = preload("../patterns.gd")
 
 const TilesByTextureSubpalette  = preload("subpalette_tiles_by_texture.gd")
 const TilesIndividualSubpalette = preload("subpalette_tiles_individual.gd")
@@ -29,7 +29,7 @@ func _init(selection_paper: Selection, tiles_paper: Paper, eraser: Instrument).(
 
 	var selection_map = selection_paper.get_selection_map()
 	selection_paper.connect("pattern_copied", self, "__on_selection_pattern_copied")
-	var selection_pattern_holder = Common.ValueHolder.new(Pattern.new(Vector2.ONE, PoolIntArray([0, 0, 0, 0])))
+	var selection_pattern_holder = Common.ValueHolder.new(Patterns.Pattern.new(Vector2.ONE, PoolIntArray([0, 0, 0, 0])))
 
 	var tb = TB.tree(self)
 	tb.node(toolbar).with_children([
@@ -59,7 +59,7 @@ func _init(selection_paper: Selection, tiles_paper: Paper, eraser: Instrument).(
 		])
 	]).build()
 
-func __on_selection_pattern_copied(pattern: Pattern) -> void:
+func __on_selection_pattern_copied(pattern: Patterns.Pattern) -> void:
 	__on_subpalette_selected(pattern)
 
 func __on_place_random_tile_button_toggled(button_pressed: bool) -> void:
