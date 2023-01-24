@@ -192,7 +192,7 @@ func forward_canvas_gui_input(event: InputEvent) -> bool:
 						if event.button_index != __dragging_button:
 							__dragging_button = 0
 							if __active_instrument:
-								__active_instrument.interrupt()
+								__active_instrument.pull(true)
 								__set_active_instrument(null)
 				else:
 					if event.button_index == __dragging_button:
@@ -211,7 +211,7 @@ func forward_canvas_gui_input(event: InputEvent) -> bool:
 			if event.scancode == KEY_ESCAPE:
 				if event.pressed:
 					if __active_instrument:
-						__active_instrument.interrupt()
+						__active_instrument.pull(true)
 						__set_active_instrument(null)
 						is_event_consumed = true
 			else:

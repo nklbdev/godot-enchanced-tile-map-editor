@@ -10,15 +10,12 @@ func _before_pushed() -> void:
 	pass
 func _after_pushed() -> void:
 	pass
-func _before_pulled() -> void:
+func _before_pulled(force: bool) -> void:
 	pass
-func _after_pulled() -> void:
+func _after_pulled(force: bool) -> void:
 	__size = Vector2.ZERO
 	pass
-func _before_interrupted() -> void:
-	pass
-func _after_interrupted() -> void:
-	pass
+
 
 func _on_moved(from_position: Vector2, previous_pattern_grid_position_cell: Vector2) -> void:
 	if previous_pattern_grid_position_cell != _pattern_grid_position_cell:

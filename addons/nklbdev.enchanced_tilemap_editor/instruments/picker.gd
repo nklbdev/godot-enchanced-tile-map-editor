@@ -10,16 +10,12 @@ func _before_pushed() -> void:
 func _after_pushed() -> void:
 	# считать ячейку бумаги на позиции
 	pass
-func _before_pulled() -> void:
+func _before_pulled(force: bool) -> void:
 	pass
-func _after_pulled() -> void:
+func _after_pulled(force: bool) -> void:
 	# если ячейка бумаги считана - создать из нее паттерн и положить в _pattern_holder
 	pass
-func _before_interrupted() -> void:
-	# забыть считанную ячейку бумаги
-	pass
-func _after_interrupted() -> void:
-	pass
+
 func _on_moved(from_position: Vector2, previous_pattern_grid_position_cell: Vector2) -> void:
 	if _is_pushed:
 		# считать ячейку бумаги на позиции

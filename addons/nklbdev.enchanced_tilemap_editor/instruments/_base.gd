@@ -92,37 +92,33 @@ func is_pushed() -> bool:
 	return _is_pushed
 
 func push() -> void:
-	if _is_pushed:
-		return
+	assert(not _is_pushed)
 	_before_pushed()
+	_ruler_grid_map.clear()
 	_paper.reset_changes()
 	_paper.freeze_input()
 	_set_origin(_position)
 	_is_pushed = true
+	_after_pushed()
 	if _paint_immediately_on_pushed:
 		paint()
 	else:
 		__paint_deferred = true
-	_after_pushed()
 
-func pull() -> void:
-	if not _is_pushed:
-		return
-	_before_pulled()
-	_paper.commit_changes()
+func pull(force: bool = false) -> void:
+	assert(_is_pushed)
+	_before_pulled(force)
+	if force:
+		_paper.reset_changes()
+	else:
+		_paper.commit_changes()
 	_paper.resume_input()
 	_set_origin(_position)
 	_pattern_grid_position_cell = Vector2.ZERO
 	_is_pushed = false
 	__paint_deferred = false
-	_after_pulled()
-
-func interrupt() -> void:
-	assert(_is_pushed)
-	_before_interrupted()
-	_paper.reset_changes()
-	pull()
-	_after_interrupted()
+	_ruler_grid_map.clear()
+	_after_pulled(force)
 
 func move_to(position: Vector2) -> void:
 	if position == _position:
@@ -166,13 +162,9 @@ func _before_pushed() -> void:
 	pass
 func _after_pushed() -> void:
 	pass
-func _before_pulled() -> void:
+func _before_pulled(force: bool) -> void:
 	pass
-func _after_pulled() -> void:
-	pass
-func _before_interrupted() -> void:
-	pass
-func _after_interrupted() -> void:
+func _after_pulled(force: bool) -> void:
 	pass
 func _on_moved(from_position: Vector2, previous_pattern_grid_position_cell: Vector2) -> void:
 	pass
