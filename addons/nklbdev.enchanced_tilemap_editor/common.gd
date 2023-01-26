@@ -543,3 +543,15 @@ static func get_map_cell_data(tile_map: TileMap, map_cell: Vector2) -> PoolIntAr
 	data[2] = autotile_coord.x
 	data[3] = autotile_coord.y
 	return data
+
+static func set_map_cell_data(tile_map: TileMap, map_cell: Vector2, data: PoolIntArray) -> void:
+	# 0 - tile_id
+	# 1 - transform
+	# 2 - autotile_coord.x
+	# 3 - autotile_coord.y
+	if data.empty():
+		return
+	elif data[0] == TileMap.INVALID_CELL:
+		tile_map.set_cellv(map_cell, TileMap.INVALID_CELL)
+	else:
+		tile_map.set_cellv(map_cell, data[0], data[1] & CELL_X_FLIPPED, data[1] & CELL_Y_FLIPPED, data[1] & CELL_TRANSPOSED, Vector2(data[2], data[3]))

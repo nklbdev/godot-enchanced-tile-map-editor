@@ -90,6 +90,7 @@ func _enter_tree() -> void:
 	__overlay.connect("mouse_entered", self, "__on_overlay_mouse_entered")
 	__overlay.connect("mouse_exited", self, "__on_overlay_mouse_exited")
 	__tile_map_paper = Paper.new()
+	__tile_map_paper.connect("changes_committed", self, "__on_tile_map_paper_changes_committed")
 	var __autotile_paper = Paper.new()
 	var __terrain_paper = Paper.new()
 	__selection = Selection.new()
@@ -99,7 +100,24 @@ func _enter_tree() -> void:
 	__bottom_panel = BottomPanel.new(__selection, __tile_map_paper, __autotile_paper, __terrain_paper)
 	add_control_to_bottom_panel(__bottom_panel, "Tile Map")
 	__bottom_panel.connect("instrument_changed", self, "__on_instrument_changed")
-	
+
+func __on_tile_map_paper_changes_committed(tile_map: TileMap, backup: Dictionary) -> void:
+	if backup.empty():
+		return
+	var original_state: Dictionary = backup.duplicate()
+	var current_state: Dictionary
+	for cell in backup.keys():
+		current_state[cell] = Common.get_map_cell_data(tile_map, cell)
+	var undo_redo: UndoRedo = get_undo_redo()
+	undo_redo.create_action("Change TileMap Cells")
+	undo_redo.add_undo_method(self, "__change_tile_map_cells", tile_map, original_state)
+	undo_redo.add_do_method(self, "__change_tile_map_cells", tile_map, current_state)
+	undo_redo.commit_action()
+
+func __change_tile_map_cells(tile_map: TileMap, changes: Dictionary) -> void:
+	for cell in changes.keys():
+		Common.set_map_cell_data(tile_map, cell, changes[cell])
+
 func _exit_tree() -> void:
 	Common.print_log("_exit_tree")
 	__tear_down()

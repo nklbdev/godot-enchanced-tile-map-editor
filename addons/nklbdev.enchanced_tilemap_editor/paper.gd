@@ -41,8 +41,7 @@ class RulerGridMap:
 		linear_growth = (int(has_offsetted_cell_lines) + int(has_offsetted_pattern_lines)) * 0.5 * cell_half_offset_type.offset_sign
 		center_offset = (Vector2.ONE - linear_size + Vector2.RIGHT * linear_growth) / 2
 
-#signal changes_committed(backup)
-#signal changes_reset(backup)
+signal changes_committed(tile_map, backup)
 signal after_set_up()
 signal before_tear_down()
 signal tile_map_settings_changed()
@@ -144,8 +143,7 @@ func update_bitmask_region(start: Vector2 = Vector2.ZERO, end: Vector2 = Vector2
 		index += 1
 
 func commit_changes() -> void:
-	# Create undoredo
-#	emit_signal("changes_committed", __backup)
+	emit_signal("changes_committed", __tile_map, __backup)
 	__backup.clear()
 
 func reset_map_cell(map_cell: Vector2) -> void:
