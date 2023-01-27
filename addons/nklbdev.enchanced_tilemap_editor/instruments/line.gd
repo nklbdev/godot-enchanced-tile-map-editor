@@ -1,4 +1,4 @@
-extends "_base.gd"
+extends "_single.gd"
 
 const Iterators = preload("../iterators.gd")
 const Algorithms = preload("../algorithms.gd")
@@ -32,17 +32,6 @@ func _on_moved(from_position: Vector2, previous_pattern_grid_position_cell: Vect
 
 func _on_paint() -> void:
 	_paper.reset_changes()
-#	if not _pattern:
-#		return
-#	if _pattern.size == Vector2.ONE:
-#		for cell in __line:
-#			paint_pattern_at(cell)
-#	else:
-#		for cell in __line:
-#			paint_pattern_at(cell)
-#	return
-
-
 	if not _pattern:
 		return
 	if _pattern.size == Vector2.ONE:

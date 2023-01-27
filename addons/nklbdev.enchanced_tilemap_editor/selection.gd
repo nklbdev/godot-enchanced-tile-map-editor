@@ -115,11 +115,11 @@ func process_input_event_key(event: InputEventKey) -> bool:
 
 func __rescan_modifiers() -> void:
 	var modifiers = Common.get_current_modifiers()
-	if modifiers | KEY_SHIFT | KEY_ALT == modifiers:
+	if modifiers == modifiers | KEY_SHIFT | KEY_ALT:
 		__set_auto_operation_type(Common.SelectionCombineOperations.SUBTRACTION)
-	elif modifiers | KEY_SHIFT | KEY_CONTROL == modifiers:
+	elif modifiers == modifiers | KEY_SHIFT | KEY_CONTROL:
 		__set_auto_operation_type(Common.SelectionCombineOperations.INTERSECTION)
-	elif modifiers | KEY_SHIFT == modifiers:
+	elif modifiers == modifiers | KEY_SHIFT:
 		__set_auto_operation_type(Common.SelectionCombineOperations.UNION)
 	else:
 		__set_auto_operation_type(Common.SelectionCombineOperations.REPLACEMENT)

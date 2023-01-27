@@ -1,4 +1,4 @@
-extends "_base.gd"
+extends "_single.gd"
 
 var __sample_cell_data: PoolIntArray
 var __start_filling_cell: Vector2

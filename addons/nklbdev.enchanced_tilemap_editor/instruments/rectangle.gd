@@ -1,4 +1,4 @@
-extends "_base.gd"
+extends "_single.gd"
 
 var __size: Vector2
 

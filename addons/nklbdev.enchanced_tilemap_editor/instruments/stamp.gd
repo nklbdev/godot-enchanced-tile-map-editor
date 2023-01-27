@@ -1,4 +1,4 @@
-extends "_base.gd"
+extends "_single.gd"
 
 const Iterators = preload("../iterators.gd")
 const Algorithms = preload("../algorithms.gd")

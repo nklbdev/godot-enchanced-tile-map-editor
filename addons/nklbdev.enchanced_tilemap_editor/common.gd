@@ -72,9 +72,7 @@ static func limit_area(size: Vector2, area_limit: float) -> Vector2:
 	return Vector2(sqrt(area_limit * abs_aspect) * sign(size.x), sqrt(area_limit / abs_aspect) * sign(size.y))
 
 
-const MODIFIER_KEYS: PoolIntArray = PoolIntArray([
-	KEY_CONTROL, KEY_ALT, KEY_SHIFT, KEY_META
-])
+const MODIFIER_KEYS: PoolIntArray = PoolIntArray([KEY_CONTROL, KEY_ALT, KEY_SHIFT, KEY_META])
 const ALL_MODIFIER_KEYS: int = KEY_CONTROL | KEY_ALT | KEY_SHIFT | KEY_META
 static func get_current_modifiers() -> int:
 	var modifiers: int
