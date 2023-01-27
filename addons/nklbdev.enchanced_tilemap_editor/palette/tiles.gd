@@ -19,6 +19,8 @@ const InstrumentFlood     = preload("../instruments/flood.gd")
 const InstrumentPicker    = preload("../instruments/picker.gd")
 
 
+var __brush_instrument_tool_button: ToolButton
+
 var __place_random_tile_button: ToolButton
 var __scattering_controls: HBoxContainer
 var __scattering_spin_box: SpinBox
@@ -28,24 +30,26 @@ func _init(selection_paper: Selection, tiles_paper: Paper, eraser: Instrument).(
 	TilesIndividualSubpalette.new(),
 	TilesPatternsSubpalette.new()]) -> void:
 
-	var selection_map = selection_paper.get_selection_map()
+	var selection_map: TileMap = selection_paper.get_selection_map()
 	selection_paper.connect("pattern_copied", self, "__on_selection_pattern_copied")
-	var selection_pattern_holder = Common.ValueHolder.new(Patterns.Pattern.new(Vector2.ONE, PoolIntArray([0, 0, 0, 0])))
+	var selection_pattern_holder: Common.ValueHolder = Common.ValueHolder.new(Patterns.Pattern.new(Vector2.ONE, PoolIntArray([0, 0, 0, 0])))
 
-	var instrument_line = InstrumentLine.new(_pattern_holder, tiles_paper, selection_map)
-	var instrument_rectangle = InstrumentRectangle.new(_pattern_holder, tiles_paper, selection_map)
-	var instrument_bucket_fill = InstrumentFlood.new(_pattern_holder, tiles_paper, tiles_paper, selection_map)
+	var instrument_line: InstrumentLine = InstrumentLine.new(_pattern_holder, tiles_paper, selection_map)
+	var instrument_rectangle: InstrumentRectangle = InstrumentRectangle.new(_pattern_holder, tiles_paper, selection_map)
+	var instrument_bucket_fill: InstrumentFlood = InstrumentFlood.new(_pattern_holder, tiles_paper, tiles_paper, selection_map)
 	var combined_brush_instrument: InstrumentCombined = InstrumentCombined.new(InstrumentStamp.new(_pattern_holder, tiles_paper, selection_map))
 	combined_brush_instrument.set_instrument(KEY_SHIFT, instrument_line)
 	combined_brush_instrument.set_instrument(KEY_CONTROL | KEY_SHIFT, instrument_rectangle)
 	combined_brush_instrument.set_instrument(KEY_ALT | KEY_SHIFT, instrument_bucket_fill)
+	
+	__brush_instrument_tool_button = toolbar.create_instrument_button("Stamp", KEY_B, "brush", combined_brush_instrument)
 
 	var tb = TB.tree(self)
 	tb.node(toolbar).with_children([
 		tb.node(toolbar.create_instrument_button("Rectangle Selection", KEY_B, "rectangle_selection", InstrumentRectangle.new(selection_pattern_holder, selection_paper, null, false))),
 		tb.node(toolbar.create_instrument_button("Same Tile Selection", KEY_B, "magic_wand", InstrumentFlood.new(selection_pattern_holder, selection_paper, tiles_paper, null))),
 		tb.node(VSeparator.new()),
-		tb.node(toolbar.create_instrument_button("Stamp", KEY_B, "brush", combined_brush_instrument)),
+		tb.node(__brush_instrument_tool_button),
 		tb.node(toolbar.create_instrument_button("Line", KEY_B, "line", instrument_line)),
 		tb.node(toolbar.create_instrument_button("Rectangle", KEY_B, "rectangle", instrument_rectangle)),
 		tb.node(toolbar.create_instrument_button("Fill", KEY_B, "bucket", instrument_bucket_fill)),
@@ -67,6 +71,10 @@ func _init(selection_paper: Selection, tiles_paper: Paper, eraser: Instrument).(
 				})
 		])
 	]).build()
+
+func _ready() -> void:
+	__brush_instrument_tool_button.pressed = true
+	__brush_instrument_tool_button.emit_signal("toggled", true)
 
 func __on_selection_pattern_copied(pattern: Patterns.Pattern) -> void:
 	__on_subpalette_selected(pattern)

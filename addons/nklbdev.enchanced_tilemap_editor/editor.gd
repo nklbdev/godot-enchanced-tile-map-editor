@@ -98,8 +98,8 @@ func _enter_tree() -> void:
 	__visual_root.add_child(__selection.get_selection_operand_map())
 	
 	__bottom_panel = BottomPanel.new(__selection, __tile_map_paper, __autotile_paper, __terrain_paper)
-	add_control_to_bottom_panel(__bottom_panel, "Tile Map")
 	__bottom_panel.connect("instrument_changed", self, "__on_instrument_changed")
+	add_control_to_bottom_panel(__bottom_panel, "Tile Map")
 
 func __on_tile_map_paper_changes_committed(tile_map: TileMap, backup: Dictionary) -> void:
 	if backup.empty():
