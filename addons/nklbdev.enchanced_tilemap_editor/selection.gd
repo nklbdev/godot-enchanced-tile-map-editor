@@ -110,7 +110,6 @@ func process_input_event_key(event: InputEventKey) -> bool:
 		return true
 	elif event.scancode & Common.ALL_MODIFIER_KEYS > 0:
 		__rescan_modifiers()
-		return true
 	return false
 
 func __rescan_modifiers() -> void:

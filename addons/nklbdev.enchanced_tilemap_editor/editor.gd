@@ -236,6 +236,8 @@ func forward_canvas_gui_input(event: InputEvent) -> bool:
 				is_event_consumed = __active_instrument.process_input_event_key(event)
 		if not is_event_consumed:
 			is_event_consumed = __selection.process_input_event_key(event)
+		if not is_event_consumed:
+			is_event_consumed = __bottom_panel.process_input_event_key(event)
 	if is_event_consumed:
 		update_overlays()
 	return is_event_consumed

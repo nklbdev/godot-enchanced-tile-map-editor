@@ -63,6 +63,9 @@ func tear_down() -> void:
 	for palette_index in __palettes_option_button.get_item_count():
 		__palettes_option_button.get_item_metadata(palette_index).tear_down()
 
+func process_input_event_key(event: InputEventKey) -> bool:
+	return __current_palette.process_input_event_key(event)
+
 func __add_palette(palette: Control) -> void:
 	__palettes_option_button.add_icon_item(palette.icon, palette.title)
 	__palettes_option_button.set_item_metadata(__palettes_option_button.get_item_count() - 1, palette)

@@ -28,13 +28,13 @@ func _init(selection_paper: Selection, autotiles_paper: Paper, terrains_paper: P
 	combined_brush_instrument.set_instrument(KEY_SHIFT, instrument_line)
 	combined_brush_instrument.set_instrument(KEY_CONTROL | KEY_SHIFT, instrument_rectangle)
 	
-	__brush_instrument_tool_button = toolbar.create_instrument_button("Stamp", KEY_B, "brush", combined_brush_instrument)
+	__brush_instrument_tool_button = toolbar.create_instrument_button("Brush\nShift+LMB: Line\nShift+Ctrl+LMB: Rectangle", KEY_B, "brush", combined_brush_instrument)
 	
 	tb.node(toolbar).with_children([
 		tb.node(__brush_instrument_tool_button),
-		tb.node(toolbar.create_instrument_button("Line", KEY_B, "line", instrument_line)),
-		tb.node(toolbar.create_instrument_button("Rectangle", KEY_B, "rectangle", instrument_rectangle)),
-		tb.node(toolbar.create_instrument_button("Picker", KEY_B, "picker", InstrumentPicker.new(pattern_holder, paper, selection_map))),
+		tb.node(toolbar.create_instrument_button("Line", KEY_L, "line", instrument_line)),
+		tb.node(toolbar.create_instrument_button("Rectangle", KEY_R, "rectangle", instrument_rectangle)),
+		tb.node(toolbar.create_instrument_button("Picker", KEY_I, "picker", InstrumentPicker.new(pattern_holder, paper, selection_map))),
 	]).build()
 
 func _ready() -> void:

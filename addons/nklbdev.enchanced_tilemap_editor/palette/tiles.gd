@@ -42,19 +42,19 @@ func _init(selection_paper: Selection, tiles_paper: Paper, eraser: Instrument).(
 	combined_brush_instrument.set_instrument(KEY_CONTROL | KEY_SHIFT, instrument_rectangle)
 	combined_brush_instrument.set_instrument(KEY_ALT | KEY_SHIFT, instrument_bucket_fill)
 	
-	__brush_instrument_tool_button = toolbar.create_instrument_button("Stamp", KEY_B, "brush", combined_brush_instrument)
+	__brush_instrument_tool_button = toolbar.create_instrument_button("Brush\nShift+LMB: Line\nShift+Ctrl+LMB: Rectangle", KEY_B, "brush", combined_brush_instrument)
 
 	var tb = TB.tree(self)
 	tb.node(toolbar).with_children([
-		tb.node(toolbar.create_instrument_button("Rectangle Selection", KEY_B, "rectangle_selection", InstrumentRectangle.new(selection_pattern_holder, selection_paper, null, false))),
-		tb.node(toolbar.create_instrument_button("Same Tile Selection", KEY_B, "magic_wand", InstrumentFlood.new(selection_pattern_holder, selection_paper, tiles_paper, null))),
+		tb.node(toolbar.create_instrument_button("Rectangle Selection", KEY_M, "rectangle_selection", InstrumentRectangle.new(selection_pattern_holder, selection_paper, null, false))),
+		tb.node(toolbar.create_instrument_button("Same Tile Selection", KEY_W, "magic_wand", InstrumentFlood.new(selection_pattern_holder, selection_paper, tiles_paper, null))),
 		tb.node(VSeparator.new()),
 		tb.node(__brush_instrument_tool_button),
-		tb.node(toolbar.create_instrument_button("Line", KEY_B, "line", instrument_line)),
-		tb.node(toolbar.create_instrument_button("Rectangle", KEY_B, "rectangle", instrument_rectangle)),
-		tb.node(toolbar.create_instrument_button("Fill", KEY_B, "bucket", instrument_bucket_fill)),
-		tb.node(toolbar.create_instrument_button("Picker", KEY_B, "picker", InstrumentPicker.new(_pattern_holder, tiles_paper, selection_map))),
-		tb.node(toolbar.create_instrument_button("Eraser", KEY_B, "eraser", eraser)),
+		tb.node(toolbar.create_instrument_button("Line", KEY_L, "line", instrument_line)),
+		tb.node(toolbar.create_instrument_button("Rectangle", KEY_R, "rectangle", instrument_rectangle)),
+		tb.node(toolbar.create_instrument_button("Fill", KEY_F, "bucket", instrument_bucket_fill)),
+		tb.node(toolbar.create_instrument_button("Picker", KEY_I, "picker", InstrumentPicker.new(_pattern_holder, tiles_paper, selection_map))),
+		tb.node(toolbar.create_instrument_button("Eraser", KEY_E, "eraser", eraser)),
 		tb.node(VSeparator.new()),
 		tb.node(ToolButton.new(), "__place_random_tile_button").with_props({
 			focus_mode = Control.FOCUS_NONE,
@@ -81,4 +81,3 @@ func __on_selection_pattern_copied(pattern: Patterns.Pattern) -> void:
 
 func __on_place_random_tile_button_toggled(button_pressed: bool) -> void:
 	__scattering_controls.visible = button_pressed
-	pass
