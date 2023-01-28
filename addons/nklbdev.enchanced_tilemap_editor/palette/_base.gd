@@ -36,11 +36,7 @@ func tear_down() -> void:
 		__subpalettes_option_button.get_item_metadata(subpalette_index).tear_down()
 
 func process_input_event_key(event: InputEventKey) -> bool:
-	var is_event_handled: bool = false
-	# TODO: handle input
-	if not is_event_handled:
-		is_event_handled = toolbar.process_input_event_key(event)
-	return is_event_handled
+	return toolbar.process_input_event_key(event)
 
 func __add_subpalette(subpalette: Control) -> void:
 	__subpalettes_option_button.add_icon_item(subpalette.icon, subpalette.title)
