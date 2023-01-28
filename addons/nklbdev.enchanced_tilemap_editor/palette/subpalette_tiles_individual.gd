@@ -95,7 +95,7 @@ class TileOnTileMap:
 			var event_map_cell = __subtiles_map.world_to_map(__subtiles_map.get_local_mouse_position())
 			if event is InputEventMouseButton:
 				if event.button_index == BUTTON_LEFT:
-					if event.pressed:
+					if event.pressed and not event.control:
 						if __subtiles_map.get_cellv(event_map_cell) != TileMap.INVALID_CELL:
 							assert(not __dragging)
 							__dragging = true

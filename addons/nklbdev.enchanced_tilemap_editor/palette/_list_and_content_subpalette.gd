@@ -171,7 +171,7 @@ func __set_content_zoom(zoom: float, origin: Vector2 = __get_content_panel_cente
 	__update_center_view_button()
 
 var __warping: bool
-var __content_dragging: bool
+var __content_dragging_button: int
 func __on_content_panel_gui_input(event: InputEvent) -> void:
 	if _content == null:
 		return
@@ -179,14 +179,24 @@ func __on_content_panel_gui_input(event: InputEvent) -> void:
 		if event is InputEventMouseButton:
 			if event.pressed:
 				match event.button_index:
-					BUTTON_MIDDLE: __content_dragging = true
+					BUTTON_LEFT, BUTTON_MIDDLE, BUTTON_RIGHT:
+						if event.button_index != BUTTON_LEFT or event.control:
+							__content_dragging_button = event.button_index
+							return
 			else:
-				match event.button_index:
-					BUTTON_MIDDLE: __content_dragging = false
-					BUTTON_WHEEL_UP: __zoom_content(1.5, event.position)
-					BUTTON_WHEEL_DOWN: __zoom_content(1 / 1.5, event.position)
+				if event.button_index == __content_dragging_button:
+					__content_dragging_button = 0
+					return
+				else:
+					match event.button_index:
+						BUTTON_WHEEL_UP:
+							__zoom_content(1.5, event.position)
+							return
+						BUTTON_WHEEL_DOWN:
+							__zoom_content(1 / 1.5, event.position)
+							return
 		elif event is InputEventMouseMotion:
-			if __content_dragging:
+			if __content_dragging_button > 0:
 				if __warping:
 					__warping = false
 				else:
@@ -196,7 +206,8 @@ func __on_content_panel_gui_input(event: InputEvent) -> void:
 				if event.position != warped_mouse_position:
 					__warping = true
 					__content_panel.warp_mouse(warped_mouse_position)
-	_post_process_content_panel_gui_input(event)
+	if __content_dragging_button == 0:
+		_post_process_content_panel_gui_input(event)
 
 func _post_process_content_panel_gui_input(event: InputEvent) -> void:
 	pass

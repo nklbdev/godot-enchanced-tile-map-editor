@@ -47,7 +47,7 @@ class TileOnTexture:
 	func _gui_input(event: InputEvent) -> void:
 		if event is InputEventMouseButton:
 			if event.button_index == BUTTON_LEFT:
-				if event.pressed:
+				if event.pressed and not event.control:
 					assert(not __dragging)
 					__dragging = true
 					__selection_rect.position = event.position
