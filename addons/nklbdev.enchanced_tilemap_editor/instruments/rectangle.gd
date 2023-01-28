@@ -18,7 +18,7 @@ func _after_pulled(force: bool) -> void:
 
 
 func _on_moved(from_position: Vector2, previous_pattern_grid_position_cell: Vector2) -> void:
-	if previous_pattern_grid_position_cell != _pattern_grid_position_cell:
+	if _pattern and previous_pattern_grid_position_cell != _pattern_grid_position_cell:
 		var size: Vector2 = _pattern_grid_position_cell
 		if size == Vector2.ZERO:
 			pass
