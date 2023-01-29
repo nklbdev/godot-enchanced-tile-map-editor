@@ -219,21 +219,21 @@ func __on_content_panel_resized() -> void:
 	__content_scaler.rect_position += center - __previous_content_panel_center
 	__previous_content_panel_center = center
 
-func _on_tile_region_selected(region: Rect2, tile: Tile) -> void:
+const _temp_data: PoolIntArray = PoolIntArray([0, 0, 0, 0])
+func _on_tile_region_selected(region: Rect2, tile: Tile, offsetted: bool = false) -> void:
 	if _previous_selected_tile and _previous_selected_tile != tile:
 		_previous_selected_tile.unselect()
 	_previous_selected_tile = tile
 	# TODO сделать чо надо
-	var data: PoolIntArray
-	data.resize(region.size.x * region.size.y * 4)
-	var i: int = 0
+#	prints("off", _tile_map.cell_half_offset, _tile_map.cell_half_offset % 3)
+	_selected_pattern = Patterns.Pattern.new(Common.CELL_HALF_OFFSET_TYPES[_tile_map.cell_half_offset].offset_orientation)
 	for y in range(region.position.y, region.end.y):
 		for x in range(region.position.x, region.end.x):
-			data[i    ] = tile.tile_id
-			data[i + 1] = 0 # transformation
-			data[i + 2] = x
-			data[i + 3] = y
-			i += 4
-	_selected_pattern = Patterns.Pattern.new(region.size, data)
+			_temp_data[0] = tile.tile_id
+			_temp_data[1] = 0 # transformation
+			_temp_data[2] = x
+			_temp_data[3] = y
+			var cell: Vector2 = Vector2(x, y)
+			_selected_pattern.set_cell_data(cell - (Vector2.ZERO if offsetted else region.position), _temp_data)
+	_selected_pattern.normalize()
 	emit_signal("selected", _selected_pattern)
-	pass

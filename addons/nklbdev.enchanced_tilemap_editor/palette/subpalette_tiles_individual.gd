@@ -44,7 +44,7 @@ class TileOnTileMap:
 
 	func _init(tile_id: int, tile_map: TileMap, selection_subscriber: Object) -> void:
 		self.tile_id = tile_id
-		connect("region_selected", selection_subscriber, "_on_tile_region_selected", [self])
+		connect("region_selected", selection_subscriber, "_on_tile_region_selected", [self, true])
 		mouse_filter = MOUSE_FILTER_IGNORE
 		
 		__subtiles_map = TileMap.new()

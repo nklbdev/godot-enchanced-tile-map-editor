@@ -35,7 +35,7 @@ func __set_instrument(instrument: Instrument) -> void:
 func _init(selection_paper: Selection, tiles_paper: Paper, autotiles_paper: Paper, terrains_paper: Paper) -> void:
 	rect_min_size.y = 200
 	__palettes_option_button = OptionButton.new()
-	var __eraser_pattern_holder: Common.ValueHolder = Common.ValueHolder.new(Patterns.Pattern.new(Vector2.ONE, [-1, 0, 0, 0]))
+	var __eraser_pattern_holder: Common.ValueHolder = Common.ValueHolder.new(Patterns.Pattern.from_rect_and_data(Rect2(Vector2.ZERO, Vector2.ONE), [-1, 0, 0, 0], TileMap.HALF_OFFSET_DISABLED))
 	var eraser = InstrumentStamp.new(__eraser_pattern_holder, tiles_paper, selection_paper.get_selection_map(), true, true)
 	__alternate_instrument = eraser
 	__add_palette(TilesPalette.new(selection_paper, tiles_paper, eraser))

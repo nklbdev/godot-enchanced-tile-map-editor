@@ -120,7 +120,7 @@ class TilesTextureRect:
 		for tile_id in tile_set.get_tiles_ids():
 			if tile_set.tile_get_texture(tile_id) == texture:
 				var tile = TileOnTexture.new(tile_id, tile_set)
-				tile.connect("region_selected", selection_subscriber, "_on_tile_region_selected", [tile])
+				tile.connect("region_selected", selection_subscriber, "_on_tile_region_selected", [tile, false])
 				add_child(tile)
 
 func _init().("By Texture", "texture") -> void: pass

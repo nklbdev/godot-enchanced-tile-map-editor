@@ -20,7 +20,7 @@ static func serialize(value):
 			assert(false, "Can not serialize RID")
 			return 0
 		TYPE_OBJECT:
-			assert(false, "Can not serialize Object")
+			assert(false, "Can not serialize Object, use serialize_object method instead")
 			return 0
 		TYPE_DICTIONARY:
 			var result: Dictionary = {}

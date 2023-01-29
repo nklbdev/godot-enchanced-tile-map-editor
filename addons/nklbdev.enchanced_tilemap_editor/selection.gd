@@ -79,16 +79,15 @@ func process_input_event_key(event: InputEventKey) -> bool:
 				else:
 					var d: PoolIntArray = Common.get_map_cell_data(__tile_map_to_select, cell)
 					data[i] = d[0]
-					if d[0] >= 0:
-						data[i + 1] = d[1]
-						data[i + 2] = d[2]
-						data[i + 3] = d[3]
-						if cut:
-							__tile_map_to_select.set_cellv(cell, TileMap.INVALID_CELL)
+					data[i + 1] = d[1]
+					data[i + 2] = d[2]
+					data[i + 3] = d[3]
+					if d[0] >= 0 and cut:
+						__tile_map_to_select.set_cellv(cell, TileMap.INVALID_CELL)
 				i += 4
 			if cut:
 				__selection_map.clear()
-			var pattern: Patterns.Pattern = Patterns.Pattern.new(used_rect.size, data)
+			var pattern: Patterns.Pattern = Patterns.Pattern.from_rect_and_data(used_rect, data, __tile_map_to_select.cell_half_offset)
 			var serialized_pattern: String = Patterns.serialize(pattern)
 			OS.clipboard = serialized_pattern
 			pattern = Patterns.deserialize(serialized_pattern)

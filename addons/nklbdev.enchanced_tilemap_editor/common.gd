@@ -385,8 +385,10 @@ const SHADOW_COLOR = SUBTILE_COLOR * Color(1, 1, 1, 0.4)
 const SELECTED_RECT_COLOR = Color.white
 const SELECTION_RECT_COLOR = Color.lightskyblue
 
+
 static func set_up_statics(editor_interface: EditorInterface) -> void:
-	assert(__STATICS.size() == 0)
+	if (__STATICS.size() > 0):
+		return
 	var editor_settings = editor_interface.get_editor_settings()
 	__STATICS.resize(Statics.MAX)
 	__STATICS[Statics.EDITOR_INTERFACE] = editor_interface
@@ -395,6 +397,11 @@ static func set_up_statics(editor_interface: EditorInterface) -> void:
 	__STATICS[Statics.SETTINGS] = Settings.new(editor_settings)
 	for i in 5:
 		CELL_HALF_OFFSET_TYPES[i] = CellHalfOffsetType.new(i)
+	CELL_HALF_OFFSET_TYPES[TileMap.HALF_OFFSET_X].opposite = CELL_HALF_OFFSET_TYPES[TileMap.HALF_OFFSET_NEGATIVE_X]
+	CELL_HALF_OFFSET_TYPES[TileMap.HALF_OFFSET_NEGATIVE_X].opposite = CELL_HALF_OFFSET_TYPES[TileMap.HALF_OFFSET_X]
+	CELL_HALF_OFFSET_TYPES[TileMap.HALF_OFFSET_Y].opposite = CELL_HALF_OFFSET_TYPES[TileMap.HALF_OFFSET_NEGATIVE_Y]
+	CELL_HALF_OFFSET_TYPES[TileMap.HALF_OFFSET_NEGATIVE_Y].opposite = CELL_HALF_OFFSET_TYPES[TileMap.HALF_OFFSET_Y]
+	CELL_HALF_OFFSET_TYPES[TileMap.HALF_OFFSET_DISABLED].opposite = CELL_HALF_OFFSET_TYPES[TileMap.HALF_OFFSET_DISABLED]
 
 static func tear_down_statics() -> void:
 	assert(__STATICS.size() != 0)
@@ -487,20 +494,42 @@ class CellFiller:
 	func perform() -> void:
 		pass
 
+enum HalfOffsetOrientation {
+	NOT_OFFSETTED = 1,
+	HORIZONTAL_OFFSETTED = 2,
+	VERTICAL_OFFSETTED = 4,
+}
+
+enum HalfOffsetCompatibility {
+	NOT_OFFSETTED = 1,
+	HORIZONTAL_OFFSETTED = 2,
+	VERTICAL_OFFSETTED = 4,
+	OFFSETTED = 6,
+	ALL = 7
+}
+
 class CellHalfOffsetType:
 	var index: int
 	var transposed: bool
+	var orientation: int
 	var offset_sign: int
 	var line_direction: Vector2
 	var column_direction: Vector2
 	var offset: Vector2
+	var opposite: CellHalfOffsetType
+	var cell_regular_scale: Vector2
+	var offset_orientation: int
 	func _init(index_: int) -> void:
 		index = index_
 		transposed = index in [TileMap.HALF_OFFSET_Y, TileMap.HALF_OFFSET_NEGATIVE_Y]
+		orientation = VERTICAL if transposed else HORIZONTAL
 		offset_sign = 1 if index < 2 else (-1 if index > 2 else 0)
 		line_direction = conv(Vector2.RIGHT)
 		column_direction = conv(Vector2.DOWN)
 		offset = line_direction * 0.5 * offset_sign
+		cell_regular_scale = line_direction + column_direction * (1 if index == TileMap.HALF_OFFSET_DISABLED else (sqrt(3) / 2))
+		offset_orientation = HalfOffsetOrientation.NOT_OFFSETTED if index == TileMap.HALF_OFFSET_DISABLED else \
+			(HalfOffsetOrientation.VERTICAL_OFFSETTED if transposed else HalfOffsetOrientation.HORIZONTAL_OFFSETTED)
 	func get_line(cell: Vector2) -> int:
 		return int(cell.x if transposed else cell.y)
 	func get_column(cell: Vector2) -> int:
@@ -514,33 +543,65 @@ class CellHalfOffsetType:
 const CELL_X_FLIPPED: int = 1
 const CELL_Y_FLIPPED: int = 2
 const CELL_TRANSPOSED: int = 4
+const CELL_CW1_ROTATED: int = CELL_TRANSPOSED | CELL_X_FLIPPED
+const CELL_CW2_ROTATED: int = CELL_X_FLIPPED | CELL_Y_FLIPPED
+const CELL_CW3_ROTATED: int = CELL_TRANSPOSED | CELL_Y_FLIPPED
 
+const ROTATE_CCW: Transform2D = Transform2D(Vector2.UP, Vector2.RIGHT, Vector2.ZERO)
+const ROTATE_CW: Transform2D = Transform2D(Vector2.DOWN, Vector2.LEFT, Vector2.ZERO)
+const TRANSPOSE: Transform2D = Transform2D(Vector2.DOWN, Vector2.RIGHT, Vector2.ZERO)
+
+const normal_rotation_matrix: PoolIntArray = PoolIntArray([
+	0,
+	CELL_X_FLIPPED | CELL_TRANSPOSED,
+	CELL_X_FLIPPED | CELL_Y_FLIPPED,
+	CELL_Y_FLIPPED | CELL_TRANSPOSED,
+])
+const mirrored_rotation_matrix: PoolIntArray = PoolIntArray([
+	CELL_X_FLIPPED,
+	CELL_X_FLIPPED | CELL_Y_FLIPPED | CELL_TRANSPOSED,
+	CELL_Y_FLIPPED,
+	CELL_TRANSPOSED,
+])
+
+static func is_flag_count_odd(flags: int) -> bool:
+	return bool((((flags * 0x01_0101_0101_0101) & 0x40_2010_0804_0201) % 0x1FF) & 1)
+
+static func rotate_cell_transform(cell_transform: int, steps: int) -> int:
+	if is_flag_count_odd(cell_transform):
+		# Odd number of flags activated = mirrored rotation
+		for i in 4:
+			if cell_transform == mirrored_rotation_matrix[i]:
+				return mirrored_rotation_matrix[wrapi(i + steps, 0, 4)]
+	else:
+		# Even number of flags activated = normal rotation
+		for i in 4:
+			if cell_transform == normal_rotation_matrix[i]:
+				return normal_rotation_matrix[wrapi(i + steps, 0, 4)]
+	return 0 # never
+
+
+const __cell_data_to_return: PoolIntArray = PoolIntArray([0, 0, 0, 0])
 static func get_map_cell_data(tile_map: TileMap, map_cell: Vector2) -> PoolIntArray:
 	# 0 - tile_id
 	# 1 - transform
 	# 2 - autotile_coord.x
 	# 3 - autotile_coord.y
 	var tile_id: int = tile_map.get_cellv(map_cell)
-	var data: PoolIntArray = PoolIntArray()
 	if tile_id < 0:
-		data.resize(1)
-		data[0] = tile_id
-		return data
-	data.resize(4)
-	data[0] = tile_id
-	var x: int = int(map_cell.x)
-	var y: int = int(map_cell.y)
-	data[1] = 0
-	if tile_map.is_cell_x_flipped(x, y):
-		data[1] |= CELL_X_FLIPPED
-	if tile_map.is_cell_y_flipped(x, y):
-		data[1] |= CELL_Y_FLIPPED
-	if tile_map.is_cell_transposed(x, y):
-		data[1] |= CELL_TRANSPOSED
-	var autotile_coord: Vector2 = tile_map.get_cell_autotile_coord(x, y)
-	data[2] = autotile_coord.x
-	data[3] = autotile_coord.y
-	return data
+		__cell_data_to_return.fill(0)
+	else:
+		var x: int = int(map_cell.x)
+		var y: int = int(map_cell.y)
+		__cell_data_to_return[1] = \
+			int(tile_map.is_cell_x_flipped(x, y)) * CELL_X_FLIPPED | \
+			int(tile_map.is_cell_y_flipped(x, y)) * CELL_Y_FLIPPED | \
+			int(tile_map.is_cell_transposed(x, y)) * CELL_TRANSPOSED
+		var autotile_coord: Vector2 = tile_map.get_cell_autotile_coord(x, y)
+		__cell_data_to_return[2] = autotile_coord.x
+		__cell_data_to_return[3] = autotile_coord.y
+	__cell_data_to_return[0] = tile_id
+	return __cell_data_to_return
 
 static func set_map_cell_data(tile_map: TileMap, map_cell: Vector2, data: PoolIntArray) -> void:
 	# 0 - tile_id
@@ -552,4 +613,8 @@ static func set_map_cell_data(tile_map: TileMap, map_cell: Vector2, data: PoolIn
 	elif data[0] == TileMap.INVALID_CELL:
 		tile_map.set_cellv(map_cell, TileMap.INVALID_CELL)
 	else:
-		tile_map.set_cellv(map_cell, data[0], data[1] & CELL_X_FLIPPED, data[1] & CELL_Y_FLIPPED, data[1] & CELL_TRANSPOSED, Vector2(data[2], data[3]))
+		tile_map.set_cellv(map_cell, data[0],
+			data[1] & CELL_X_FLIPPED,
+			data[1] & CELL_Y_FLIPPED,
+			data[1] & CELL_TRANSPOSED,
+			Vector2(data[2], data[3]))
