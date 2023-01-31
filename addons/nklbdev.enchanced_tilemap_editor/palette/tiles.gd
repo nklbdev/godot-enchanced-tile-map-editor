@@ -25,12 +25,7 @@ var __place_random_tile_button: ToolButton
 var __scattering_controls: HBoxContainer
 var __scattering_spin_box: SpinBox
 var __rotation_menu_button: MenuButton
-#var __rotation_90_popup_menu: PopupMenu
-#var __rotation_270_popup_menu: PopupMenu
 var __flipping_menu_button: MenuButton
-#var __flipping_0_popup_menu: PopupMenu
-#var __flipping_90_popup_menu: PopupMenu
-
 func _init(selection_paper: Selection, tiles_paper: Paper, eraser: Instrument).("Tiles", "tiles", [
 	TilesByTextureSubpalette.new(),
 	TilesIndividualSubpalette.new(),

@@ -91,6 +91,10 @@ class Pattern:
 		used_cells_count = __map.get_used_cells().size()
 
 	func normalize() -> void:
+		return
+		print("normalize")
+		for cell in __map.get_used_cells():
+			prints(cell, Common.get_map_cell_data(__map, cell))
 		var used_rect_position: Vector2 = __map.get_used_rect().position
 		if size == Vector2.ONE and used_rect_position != Vector2.ZERO:
 			Common.set_map_cell_data(__map, Vector2.ZERO, Common.get_map_cell_data(__map, used_rect_position))
@@ -99,15 +103,16 @@ class Pattern:
 		if used_rect_position == Vector2.ZERO:
 			return
 		var map: TileMap = __map.duplicate(0)
+		if __map.map_to_world(used_rect_position + Vector2.ONE) - __map.map_to_world(used_rect_position) != \
+			__map.map_to_world(Vector2.ONE) - __map.map_to_world(Vector2.ZERO):
+			__map.cell_half_offset = Common.CELL_HALF_OFFSET_TYPES[__map.cell_half_offset].opposite.index
 		__map.clear()
-		map.cell_custom_transform = Transform2D.IDENTITY.translated(
-			__map.map_to_world(Vector2.ONE) - map.map_to_world(used_rect_position + Vector2.ONE)
-			) * map.cell_custom_transform
 		for cell in map.get_used_cells():
-			var target_cell: Vector2 = __map.world_to_map(map.map_to_world(cell))
-			var data: PoolIntArray = Common.get_map_cell_data(map, cell)
-			Common.set_map_cell_data(__map, target_cell, data)
+			Common.set_map_cell_data(__map, cell - used_rect_position, Common.get_map_cell_data(map, cell))
 		size = __map.get_used_rect().size
+		print("normalized")
+		for cell in __map.get_used_cells():
+			prints(cell, Common.get_map_cell_data(__map, cell))
 
 	func get_origin_map_cell(world_position: Vector2, ruler_grid_map: TileMap) -> Vector2:
 		var linear_size: Vector2 = ruler_grid_map.cell_half_offset_type.conv(size)
@@ -128,9 +133,38 @@ class Pattern:
 	func flip(flipping: int) -> void:
 		var map: TileMap = __map.duplicate(0)
 		__map.clear()
-		map.cell_custom_transform *= Transform2D(FLIPPINGS[flipping * 2], FLIPPINGS[flipping * 2 + 1], Vector2.ZERO)
+		var target_cell: Vector2
+		if map.cell_half_offset == TileMap.HALF_OFFSET_DISABLED:
+			for cell in map.get_used_cells():
+				match flipping:
+					Flipping.FLIP_0: target_cell = Vector2(cell.x, -cell.y)
+					Flipping.FLIP_45: target_cell = Vector2(-cell.y, -cell.x)
+					Flipping.FLIP_90: target_cell = Vector2(-cell.x, cell.y)
+					Flipping.FLIP_135: target_cell = Vector2(cell.y, cell.x)
+					_: assert(false)
+				Common.set_map_cell_data(__map, target_cell, Common.get_map_cell_data(map, cell))
+			return
+		var vertical: bool = map.cell_half_offset == TileMap.HALF_OFFSET_Y or map.cell_half_offset == TileMap.HALF_OFFSET_NEGATIVE_Y
 		for cell in map.get_used_cells():
-			Common.set_map_cell_data(__map, __map.world_to_map(map.map_to_world(cell)), Common.get_map_cell_data(map, cell))
+			var c: Vector3 = Common.map_to_cube(cell, map.cell_half_offset)
+			if vertical:
+				match flipping:
+					Flipping.FLIP_0:   c = Vector3( c.x,  c.z,  c.y)
+					Flipping.FLIP_30:  c = Vector3(-c.y, -c.x, -c.z)
+					Flipping.FLIP_60:  c = Vector3( c.z,  c.y,  c.x)
+					Flipping.FLIP_90:  c = Vector3(-c.x, -c.z, -c.y)
+					Flipping.FLIP_120: c = Vector3( c.y,  c.x,  c.z)
+					Flipping.FLIP_150: c = Vector3(-c.z, -c.y, -c.x)
+			else:
+				match flipping:
+					Flipping.FLIP_0:   c = Vector3(-c.z, -c.y, -c.x)
+					Flipping.FLIP_30:  c = Vector3( c.x,  c.z,  c.y)
+					Flipping.FLIP_60:  c = Vector3(-c.y, -c.x, -c.z)
+					Flipping.FLIP_90:  c = Vector3( c.z,  c.y,  c.x)
+					Flipping.FLIP_120: c = Vector3(-c.x, -c.z, -c.y)
+					Flipping.FLIP_150: c = Vector3( c.y,  c.x,  c.z)
+			target_cell = Common.cube_to_map(c, __map.cell_half_offset)
+			Common.set_map_cell_data(__map, target_cell, Common.get_map_cell_data(map, cell))
 		size = __map.get_used_rect().size
 		normalize()
 

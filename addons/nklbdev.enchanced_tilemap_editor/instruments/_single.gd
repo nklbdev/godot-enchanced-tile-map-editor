@@ -171,12 +171,23 @@ func can_paint_at(map_cell: Vector2) -> bool:
 	return _selection_map == null or _selection_map.get_used_rect().has_no_area() or _selection_map.get_cellv(map_cell) == 0
 
 func paint_pattern_at(pattern_grid_cell: Vector2) -> void:
-	var pattern_positon: Vector2 = __get_pattern_position(pattern_grid_cell)
-	for y in _pattern.size.y: for x in _pattern.size.x:
-		var pattern_cell: Vector2 = Vector2(x, y)
-		var data: PoolIntArray = _pattern.get_cell_data(pattern_cell)
+	var pattern_position: Vector2 = __get_pattern_position(pattern_grid_cell)
+	var pattern_position_c: Vector3 = Common.map_to_cube(pattern_position, _ruler_grid_map.cell_half_offset)
+	var pattern_used_rect: Rect2 = _pattern.__map.get_used_rect()
+	if pattern_used_rect.size == Vector2.ONE:
+		var data: PoolIntArray = Common.get_map_cell_data(_pattern.__map, pattern_used_rect.position)
+		if _paint_invalid_cell or data[0] >= 0 and can_paint_at(pattern_position):
+			_paper.set_map_cell_data(pattern_position, data)
+		return
+	var pattern_used_rect_position_c: Vector3 = Common.map_to_cube(pattern_used_rect.position, _pattern.__map.cell_half_offset)
+	for y in pattern_used_rect.size.y: for x in pattern_used_rect.size.x:
+		var pattern_cell: Vector2 = pattern_used_rect.position + Vector2(x, y)
+		var data: PoolIntArray = Common.get_map_cell_data(_pattern.__map, pattern_cell)
 		if _paint_invalid_cell or data[0] >= 0:
-			var map_cell = _ruler_grid_map.world_to_map(pattern_positon + _ruler_grid_map.map_to_world(pattern_cell))
+			var pattern_cell_c: Vector3 = Common.map_to_cube(pattern_cell, _pattern.__map.cell_half_offset)
+			var pattern_used_cell_c: Vector3 = pattern_cell_c - pattern_used_rect_position_c
+			var map_cell_c: Vector3 = pattern_position_c + pattern_used_cell_c
+			var map_cell: Vector2 = Common.cube_to_map(map_cell_c, _ruler_grid_map.cell_half_offset)
 			if can_paint_at(map_cell):
 				_paper.set_map_cell_data(map_cell, data)
 

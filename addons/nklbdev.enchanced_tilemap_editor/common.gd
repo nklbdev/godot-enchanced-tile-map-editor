@@ -618,3 +618,36 @@ static func set_map_cell_data(tile_map: TileMap, map_cell: Vector2, data: PoolIn
 			data[1] & CELL_Y_FLIPPED,
 			data[1] & CELL_TRANSPOSED,
 			Vector2(data[2], data[3]))
+
+static func map_to_cube(cell: Vector2, cell_half_offset: int) -> Vector3:
+	var x: int
+	var y: int
+	match cell_half_offset:
+		TileMap.HALF_OFFSET_X:
+			x = cell.x - (cell.y - (int(cell.y) & 1)) / 2
+			y = cell.y
+		TileMap.HALF_OFFSET_Y:
+			x = cell.x
+			y = cell.y - (cell.x - (int(cell.x) & 1)) / 2
+		TileMap.HALF_OFFSET_DISABLED:
+			assert(false)
+		TileMap.HALF_OFFSET_NEGATIVE_X:
+			x = cell.x - (cell.y + (int(cell.y) & 1)) / 2
+			y = cell.y
+		TileMap.HALF_OFFSET_NEGATIVE_Y:
+			x = cell.x
+			y = cell.y - (cell.x + (int(cell.x) & 1)) / 2
+	return Vector3(x, y, -x-y)
+
+static func cube_to_map(hex: Vector3, cell_half_offset: int) -> Vector2:
+	match cell_half_offset:
+		TileMap.HALF_OFFSET_X:
+			return Vector2(hex.x + (hex.y - (int(hex.y) & 1)) / 2, hex.y)
+		TileMap.HALF_OFFSET_Y:
+			return Vector2(hex.x, hex.y + (hex.x - (int(hex.x) & 1)) / 2)
+		TileMap.HALF_OFFSET_NEGATIVE_X:
+			return Vector2(hex.x + (hex.y + (int(hex.y) & 1)) / 2, hex.y)
+		TileMap.HALF_OFFSET_NEGATIVE_Y:
+			return Vector2(hex.x, hex.y + (hex.x + (int(hex.x) & 1)) / 2)
+	assert(false)
+	return Vector2.ZERO
