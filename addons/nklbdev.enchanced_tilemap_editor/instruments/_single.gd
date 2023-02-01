@@ -59,7 +59,6 @@ func __on_paper_tile_set_settings_changed() -> void:
 	pass
 
 func __update_cached_data() -> void:
-	print(_ruler_grid_map.cell_half_offset_type)
 	_pattern = _pattern_holder.value
 	_lines_count_in_pattern = (_ruler_grid_map.cell_half_offset_type.conv(_pattern.size).y) if _pattern else 0
 
@@ -172,13 +171,13 @@ func can_paint_at(map_cell: Vector2) -> bool:
 
 func paint_pattern_at(pattern_grid_cell: Vector2) -> void:
 	var pattern_position: Vector2 = __get_pattern_position(pattern_grid_cell)
-	var pattern_position_c: Vector3 = Common.map_to_cube(pattern_position, _ruler_grid_map.cell_half_offset)
 	var pattern_used_rect: Rect2 = _pattern.__map.get_used_rect()
 	if pattern_used_rect.size == Vector2.ONE:
 		var data: PoolIntArray = Common.get_map_cell_data(_pattern.__map, pattern_used_rect.position)
 		if _paint_invalid_cell or data[0] >= 0 and can_paint_at(pattern_position):
 			_paper.set_map_cell_data(pattern_position, data)
 		return
+	var pattern_position_c: Vector3 = Common.map_to_cube(pattern_position, _ruler_grid_map.cell_half_offset)
 	var pattern_used_rect_position_c: Vector3 = Common.map_to_cube(pattern_used_rect.position, _pattern.__map.cell_half_offset)
 	for y in pattern_used_rect.size.y: for x in pattern_used_rect.size.x:
 		var pattern_cell: Vector2 = pattern_used_rect.position + Vector2(x, y)
@@ -189,6 +188,8 @@ func paint_pattern_at(pattern_grid_cell: Vector2) -> void:
 			var map_cell_c: Vector3 = pattern_position_c + pattern_used_cell_c
 			var map_cell: Vector2 = Common.cube_to_map(map_cell_c, _ruler_grid_map.cell_half_offset)
 			if can_paint_at(map_cell):
+				if data[0] == -2:
+					data[0] = -1
 				_paper.set_map_cell_data(map_cell, data)
 
 func get_pattern_cell_for_map_cell(map_cell: Vector2) -> Vector2:

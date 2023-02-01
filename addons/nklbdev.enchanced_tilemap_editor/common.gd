@@ -588,7 +588,7 @@ static func get_map_cell_data(tile_map: TileMap, map_cell: Vector2) -> PoolIntAr
 	# 2 - autotile_coord.x
 	# 3 - autotile_coord.y
 	var tile_id: int = tile_map.get_cellv(map_cell)
-	if tile_id < 0:
+	if tile_id == TileMap.INVALID_CELL:
 		__cell_data_to_return.fill(0)
 	else:
 		var x: int = int(map_cell.x)
