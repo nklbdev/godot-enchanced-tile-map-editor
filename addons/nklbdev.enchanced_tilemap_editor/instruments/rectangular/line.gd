@@ -1,7 +1,7 @@
 extends "_single.gd"
 
-const Iterators = preload("../iterators.gd")
-const Algorithms = preload("../algorithms.gd")
+const Iterators = preload("../../iterators.gd")
+const Algorithms = preload("../../algorithms.gd")
 
 var __line: PoolVector2Array = PoolVector2Array([Vector2.ZERO])
 

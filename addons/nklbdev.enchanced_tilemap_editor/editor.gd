@@ -282,7 +282,7 @@ func __on_instrument_changed() -> void:
 func __on_select_tool_button_toggled(pressed: bool) -> void:
 	update_overlays()
 
-const CELL_LINES: PoolVector2Array = PoolVector2Array([
+const RECTANGULAR_CELL_LINES: PoolVector2Array = PoolVector2Array([
 	Vector2(0, 0   ), Vector2(1, 0   ),
 	Vector2(0,    0), Vector2(0,    1),
 ])
@@ -293,6 +293,19 @@ const CELL_SUBLINES: PoolVector2Array = PoolVector2Array([
 	Vector2(-0.25, 0   ), Vector2(-0.25, 1   ),
 	Vector2( 0.25, 0   ), Vector2( 0.25, 1   ),
 ])
+
+const HEXAGONAL_HORIZONTAL_CELL_LINES: PoolVector2Array = PoolVector2Array([
+	Vector2(0, 1.0/6.0), Vector2(0, 5.0/6.0),
+	Vector2(0.5, 7.0/6.0), Vector2(1, 5.0/6.0),
+	Vector2(1, 1.0/6.0), Vector2(0.5, -1.0/6.0),
+])
+
+const HEXAGONAL_VERTICAL_CELL_LINES: PoolVector2Array = PoolVector2Array([
+	Vector2(1.0/6.0, 0), Vector2(5.0/6.0, 0),
+	Vector2(7.0/6.0, 0.5), Vector2(5.0/6.0, 1),
+	Vector2(1.0/6.0, 1), Vector2(-1.0/6.0, 0.5),
+])
+
 const Algorithms = preload("algorithms.gd")
 var __temp_grid_color: Color
 func __draw_grid(overlay: Control):
@@ -305,6 +318,7 @@ func __draw_grid(overlay: Control):
 	var draw_transform: Transform2D = __visual_root.transform
 	if (__is_mouse_on_overlay and instrument) or __active_instrument:
 		__temp_grid_color = __settings.grid_color
+		var cell_lines: PoolVector2Array = RECTANGULAR_CELL_LINES if __tile_map.cell_half_offset == TileMap.HALF_OFFSET_DISABLED else (HEXAGONAL_VERTICAL_CELL_LINES if (__tile_map.cell_half_offset % 3) & 1 else HEXAGONAL_HORIZONTAL_CELL_LINES)
 		var mouse_map_cell: Vector2 = __tile_map.world_to_map(__tile_map.get_local_mouse_position())
 		for y in range(mouse_map_cell.y - __settings.grid_fragment_radius, mouse_map_cell.y + __settings.grid_fragment_radius + 1):
 			for x in range(mouse_map_cell.x - __settings.grid_fragment_radius, mouse_map_cell.x + __settings.grid_fragment_radius + 1):
@@ -312,9 +326,9 @@ func __draw_grid(overlay: Control):
 				cell_position += Common.get_cell_half_offset(cell_position, cell_half_offset_type)
 				overlay.draw_set_transform_matrix(draw_transform.translated(cell_position))
 				__temp_grid_color.a = __settings.grid_color.a * (1 - mouse_map_cell.distance_squared_to(cell_position) / __settings.grid_fragment_radius_squared)
-				overlay.draw_multiline(CELL_LINES, __temp_grid_color)
-				__temp_grid_color.a /= 3
-				overlay.draw_multiline(CELL_SUBLINES, __temp_grid_color)
+				overlay.draw_multiline(cell_lines, __temp_grid_color)
+#				__temp_grid_color.a /= 3
+#				overlay.draw_multiline(CELL_SUBLINES, __temp_grid_color)
 		overlay.draw_set_transform_matrix(draw_transform)
 
 	# Draw axis fragment

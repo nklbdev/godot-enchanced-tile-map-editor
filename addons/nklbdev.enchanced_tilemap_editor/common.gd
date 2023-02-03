@@ -64,6 +64,8 @@ enum PatternType {
 	BACKGROUND = 2
 }
 
+const EMPTY_CELL_DATA: PoolIntArray = PoolIntArray([TileMap.INVALID_CELL, 0, 0, 0])
+
 static func limit_area(size: Vector2, area_limit: float) -> Vector2:
 	var area: float = abs(size.x * size.y)
 	if area <= area_limit:
@@ -551,34 +553,34 @@ const ROTATE_CCW: Transform2D = Transform2D(Vector2.UP, Vector2.RIGHT, Vector2.Z
 const ROTATE_CW: Transform2D = Transform2D(Vector2.DOWN, Vector2.LEFT, Vector2.ZERO)
 const TRANSPOSE: Transform2D = Transform2D(Vector2.DOWN, Vector2.RIGHT, Vector2.ZERO)
 
-const normal_rotation_matrix: PoolIntArray = PoolIntArray([
+const ROTATION_MATRIX: PoolIntArray = PoolIntArray([
+	# NORMAL
 	0,
 	CELL_X_FLIPPED | CELL_TRANSPOSED,
 	CELL_X_FLIPPED | CELL_Y_FLIPPED,
 	CELL_Y_FLIPPED | CELL_TRANSPOSED,
-])
-const mirrored_rotation_matrix: PoolIntArray = PoolIntArray([
+
+	# MIRRORED
 	CELL_X_FLIPPED,
 	CELL_X_FLIPPED | CELL_Y_FLIPPED | CELL_TRANSPOSED,
 	CELL_Y_FLIPPED,
 	CELL_TRANSPOSED,
 ])
 
-static func is_flag_count_odd(flags: int) -> bool:
-	return bool((((flags * 0x01_0101_0101_0101) & 0x40_2010_0804_0201) % 0x1FF) & 1)
+const ROTATION_MATRIX_REV: PoolIntArray = PoolIntArray([
+	0, #                |                |               0 0  000
+	4, # CELL_X_FLIPPED |                |                 1  001
+	6, #                | CELL_Y_FLIPPED |                 2  010
+	2, # CELL_X_FLIPPED | CELL_Y_FLIPPED |                 3  011
+	7, #                |                | CELL_TRANSPOSED 4  100
+	1, # CELL_X_FLIPPED |                | CELL_TRANSPOSED 5  101
+	3, #                | CELL_Y_FLIPPED | CELL_TRANSPOSED 6  110
+	5, # CELL_X_FLIPPED | CELL_Y_FLIPPED | CELL_TRANSPOSED 7  111
+])
 
 static func rotate_cell_transform(cell_transform: int, steps: int) -> int:
-	if is_flag_count_odd(cell_transform):
-		# Odd number of flags activated = mirrored rotation
-		for i in 4:
-			if cell_transform == mirrored_rotation_matrix[i]:
-				return mirrored_rotation_matrix[wrapi(i + steps, 0, 4)]
-	else:
-		# Even number of flags activated = normal rotation
-		for i in 4:
-			if cell_transform == normal_rotation_matrix[i]:
-				return normal_rotation_matrix[wrapi(i + steps, 0, 4)]
-	return 0 # never
+	var i: int = ROTATION_MATRIX_REV[cell_transform]
+	return ROTATION_MATRIX[(i % 4 + steps) % 4 + (i / 4) * 4]
 
 
 const __cell_data_to_return: PoolIntArray = PoolIntArray([0, 0, 0, 0])
@@ -651,3 +653,6 @@ static func cube_to_map(hex: Vector3, cell_half_offset: int) -> Vector2:
 			return Vector2(hex.x, hex.y + (hex.x + (int(hex.x) & 1)) / 2)
 	assert(false)
 	return Vector2.ZERO
+
+static func is_flag_count_odd(flags: int) -> bool:
+	return bool((((flags * 0x01_0101_0101_0101) & 0x40_2010_0804_0201) % 0x1FF) & 1)

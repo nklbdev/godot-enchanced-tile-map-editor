@@ -130,7 +130,7 @@ func _init(selection_paper: Selection, tiles_paper: Paper, eraser: Instrument).(
 			.get_popup_menu()) \
 		.item(Common.get_icon("random"), "Flip 30° (half-offsetted only)", 1, 0,
 			{ compatibility = Common.HalfOffsetCompatibility.OFFSETTED, flipping = Patterns.Flipping.FLIP_30 }) \
-		.submenu(Common.get_icon("random"), "Flip 45° (not offsetted only)...", 0, null, PopupMenuBuilder.new() \
+		.submenu(Common.get_icon("random"), "Flip 45° (not offsetted only)...", 0, { compatibility = Common.HalfOffsetCompatibility.NOT_OFFSETTED }, PopupMenuBuilder.new() \
 			.connected("index_pressed", self, "__on_transform_popup_menu_item_pressed", true) \
 			.item(Common.get_icon("random"), "with cells", 0, KEY_MASK_ALT | KEY_MASK_CTRL | KEY_T, \
 				{ compatibility = Common.HalfOffsetCompatibility.NOT_OFFSETTED, flipping = Patterns.Flipping.FLIP_45, cell_transform = Patterns.CellTransform.FLIP_45 }) \
@@ -152,7 +152,7 @@ func _init(selection_paper: Selection, tiles_paper: Paper, eraser: Instrument).(
 			.get_popup_menu()) \
 		.item(Common.get_icon("random"), "Flip 120° (half-offsetted only)", 4, 0,
 			{ compatibility = Common.HalfOffsetCompatibility.OFFSETTED, flipping = Patterns.Flipping.FLIP_120 }) \
-		.submenu(Common.get_icon("random"), "Flip 135° (not offsetted only)...", 0, null, PopupMenuBuilder.new() \
+		.submenu(Common.get_icon("random"), "Flip 135° (not offsetted only)...", 0, { compatibility = Common.HalfOffsetCompatibility.NOT_OFFSETTED }, PopupMenuBuilder.new() \
 			.connected("index_pressed", self, "__on_transform_popup_menu_item_pressed", true) \
 			.item(Common.get_icon("random"), "with cells", 0, KEY_MASK_ALT | KEY_MASK_CTRL | KEY_MASK_SHIFT | KEY_T, \
 				{ compatibility = Common.HalfOffsetCompatibility.NOT_OFFSETTED, flipping = Patterns.Flipping.FLIP_135, cell_transform = Patterns.CellTransform.FLIP_135 }) \
@@ -194,10 +194,6 @@ func __on_transform_popup_menu_item_pressed(item_index: int, popup_menu: PopupMe
 			if "cell_transform" in meta:
 				pattern.transform_cells(meta.cell_transform)
 
-func __transform_pattern(rotation: int = -1, flipping: int = -1, cell_transform: int = 0) -> void:
-	
-	pass
-
 class PopupMenuBuilder:
 	var __popup_menu: PopupMenu
 	func _init(popup_menu = null) -> void:
@@ -221,6 +217,7 @@ class PopupMenuBuilder:
 func _ready() -> void:
 	__brush_instrument_tool_button.pressed = true
 	__brush_instrument_tool_button.emit_signal("toggled", true)
+	__update_transform_menus()
 
 func __on_selection_pattern_copied(pattern: Patterns.Pattern) -> void:
 	__on_subpalette_selected(pattern)
