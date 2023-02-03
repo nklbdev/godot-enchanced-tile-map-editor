@@ -64,6 +64,9 @@ enum PatternType {
 	BACKGROUND = 2
 }
 
+const EMPTY_CELL_DATA: PoolIntArray = PoolIntArray([TileMap.INVALID_CELL, 0, 0, 0])
+const FORCE_EMPTY_CELL_DATA: PoolIntArray = PoolIntArray([TileMap.INVALID_CELL - 1, 0, 0, 0])
+
 static func limit_area(size: Vector2, area_limit: float) -> Vector2:
 	var area: float = abs(size.x * size.y)
 	if area <= area_limit:
@@ -125,6 +128,7 @@ class Settings:
 	var selection_color: Color
 	var drawn_cells_color: Color
 	var grid_color: Color
+	var pattern_grid_color: Color
 	var axis_color: Color
 	var axis_fragment_radius: int
 	var grid_fragment_radius: int setget __set_grid_fragment_radius
@@ -145,6 +149,7 @@ class Settings:
 		__register_project_setting("cursor_color", "cursor_color", TYPE_COLOR, Color(1, 0.5, 0.25, 0.5))
 		__register_project_setting("selection_color", "selection_color", TYPE_COLOR, Color(0.2, 0.8, 1, 0.4))
 		__register_project_setting("drawn_cells_color", "drawn_cells_color", TYPE_COLOR, Color(1, 0.5, 0.25, 0.25))
+		__register_project_setting("pattern_grid_color", "pattern_grid_color", TYPE_COLOR, Color(1, 0.5, 0.25, 0.25))
 		__register_project_setting("grid_fragment_radius", "grid_fragment_radius", TYPE_INT, 10)
 		__register_project_setting("axis_fragment_radius", "axis_fragment_radius", TYPE_INT, 20)
 		__register_project_setting("drawing_area_limit", "drawing_area_limit", TYPE_INT, 128 * 128)
@@ -411,8 +416,19 @@ static func tear_down_statics() -> void:
 static func get_static(index: int):
 	return __STATICS[index]
 
+static func get_icon_file_path(icon_name: String) -> String:
+	return "%sicons/%s.svg" % [PLUGIN_FOLDER, icon_name]
+
 static func get_icon(icon_name: String) -> Texture:
-	return resize_texture(load("%sicons/%s.svg" % [PLUGIN_FOLDER, icon_name]), __STATICS[Statics.EDITOR_SCALE] / 4)
+	return resize_texture(load(get_icon_file_path(icon_name)), __STATICS[Statics.EDITOR_SCALE] / 4)
+
+static func has_icon(icon_name: String) -> bool:
+	print(icon_name)
+	var path = get_icon_file_path(icon_name)
+	print(path)
+	var res = ResourceLoader.exists(get_icon_file_path(icon_name))
+	print(res)
+	return res
 
 static func resize_texture(texture: Texture, scale: float) -> Texture:
 	var image = texture.get_data() as Image
@@ -495,12 +511,18 @@ class CellFiller:
 		pass
 
 enum HalfOffsetOrientation {
+	NOT_OFFSETTED = 0,
+	HORIZONTAL_OFFSETTED = 1,
+	VERTICAL_OFFSETTED = 2,
+}
+
+enum HalfOffsetOrientationFlags {
 	NOT_OFFSETTED = 1,
 	HORIZONTAL_OFFSETTED = 2,
 	VERTICAL_OFFSETTED = 4,
 }
 
-enum HalfOffsetCompatibility {
+enum HalfOffsetCompatibilityFlags {
 	NOT_OFFSETTED = 1,
 	HORIZONTAL_OFFSETTED = 2,
 	VERTICAL_OFFSETTED = 4,
@@ -519,6 +541,7 @@ class CellHalfOffsetType:
 	var opposite: CellHalfOffsetType
 	var cell_regular_scale: Vector2
 	var offset_orientation: int
+	var offset_orientation_flag: int
 	func _init(index_: int) -> void:
 		index = index_
 		transposed = index in [TileMap.HALF_OFFSET_Y, TileMap.HALF_OFFSET_NEGATIVE_Y]
@@ -530,6 +553,7 @@ class CellHalfOffsetType:
 		cell_regular_scale = line_direction + column_direction * (1 if index == TileMap.HALF_OFFSET_DISABLED else (sqrt(3) / 2))
 		offset_orientation = HalfOffsetOrientation.NOT_OFFSETTED if index == TileMap.HALF_OFFSET_DISABLED else \
 			(HalfOffsetOrientation.VERTICAL_OFFSETTED if transposed else HalfOffsetOrientation.HORIZONTAL_OFFSETTED)
+		offset_orientation_flag = pow(2, offset_orientation)
 	func get_line(cell: Vector2) -> int:
 		return int(cell.x if transposed else cell.y)
 	func get_column(cell: Vector2) -> int:
@@ -620,34 +644,11 @@ static func set_map_cell_data(tile_map: TileMap, map_cell: Vector2, data: PoolIn
 			Vector2(data[2], data[3]))
 
 static func map_to_cube(cell: Vector2, cell_half_offset: int) -> Vector3:
-	var x: int
-	var y: int
-	match cell_half_offset:
-		TileMap.HALF_OFFSET_X:
-			x = cell.x - (cell.y - (int(cell.y) & 1)) / 2
-			y = cell.y
-		TileMap.HALF_OFFSET_Y:
-			x = cell.x
-			y = cell.y - (cell.x - (int(cell.x) & 1)) / 2
-		TileMap.HALF_OFFSET_DISABLED:
-			assert(false)
-		TileMap.HALF_OFFSET_NEGATIVE_X:
-			x = cell.x - (cell.y + (int(cell.y) & 1)) / 2
-			y = cell.y
-		TileMap.HALF_OFFSET_NEGATIVE_Y:
-			x = cell.x
-			y = cell.y - (cell.x + (int(cell.x) & 1)) / 2
-	return Vector3(x, y, -x-y)
+	var dir: int = cell_half_offset % 3 # 0 -> X, 1 -> Y
+	cell[dir] -= (cell[dir ^ 1] + sign(cell_half_offset - 2) * (int(cell[dir ^ 1]) & 1)) / 2
+	return Vector3(cell.x, cell.y, -cell.x-cell.y)
 
 static func cube_to_map(hex: Vector3, cell_half_offset: int) -> Vector2:
-	match cell_half_offset:
-		TileMap.HALF_OFFSET_X:
-			return Vector2(hex.x + (hex.y - (int(hex.y) & 1)) / 2, hex.y)
-		TileMap.HALF_OFFSET_Y:
-			return Vector2(hex.x, hex.y + (hex.x - (int(hex.x) & 1)) / 2)
-		TileMap.HALF_OFFSET_NEGATIVE_X:
-			return Vector2(hex.x + (hex.y + (int(hex.y) & 1)) / 2, hex.y)
-		TileMap.HALF_OFFSET_NEGATIVE_Y:
-			return Vector2(hex.x, hex.y + (hex.x + (int(hex.x) & 1)) / 2)
-	assert(false)
-	return Vector2.ZERO
+	var dir: int = cell_half_offset % 3 # 0 -> X, 1 -> Y
+	hex[dir] += (hex[dir ^ 1] + sign(cell_half_offset - 2) * (int(hex[dir ^ 1]) & 1)) / 2
+	return Vector2(hex.x, hex.y)

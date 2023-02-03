@@ -20,20 +20,21 @@ func _after_pulled(force: bool) -> void:
 	__line = [Vector2.ZERO]
 
 func _on_moved(from_position: Vector2, previous_pattern_grid_position_cell: Vector2) -> void:
-	if _is_pushed:
-		if not _pattern or _pattern.size == Vector2.ONE:
-			var from_map_cell: Vector2 = _ruler_grid_map.world_to_map(from_position - _pattern_grid_origin_map_cell_position)
-			var to_map_cell: Vector2 = _ruler_grid_map.world_to_map(_position - _pattern_grid_origin_map_cell_position)
-			if from_map_cell != to_map_cell:
-				__line = Algorithms.get_line(from_map_cell, to_map_cell, _ruler_grid_map.cell_half_offset)
-				paint()
+	if _pattern:
+		if _is_pushed:
+			if _pattern.size.x * _pattern.size.y > 1:
+				if previous_pattern_grid_position_cell != _pattern_grid_position_cell:
+					__line = Iterators.line(previous_pattern_grid_position_cell, _pattern_grid_position_cell).to_array()
+					# skip first cell
+					paint()
+			else:
+				var from_map_cell: Vector2 = _ruler_grid_map.world_to_map(from_position - _pattern_grid_origin_map_cell_position)
+				var to_map_cell: Vector2 = _ruler_grid_map.world_to_map(_position - _pattern_grid_origin_map_cell_position)
+				if from_map_cell != to_map_cell:
+					__line = Algorithms.get_line(from_map_cell, to_map_cell, _ruler_grid_map.cell_half_offset)
+					paint()
 		else:
-			if previous_pattern_grid_position_cell != _pattern_grid_position_cell:
-				__line = Iterators.line(previous_pattern_grid_position_cell, _pattern_grid_position_cell).to_array()
-				# skip first cell
-				paint()
-	else:
-		__line[0] = Vector2.ZERO
+			__line[0] = Vector2.ZERO
 
 func _on_paint() -> void:
 	if not _pattern:

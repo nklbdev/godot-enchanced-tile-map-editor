@@ -20,15 +20,15 @@ func _after_pulled(force: bool) -> void:
 	__line = [Vector2.ZERO]
 
 func _on_moved(from_position: Vector2, previous_pattern_grid_position_cell: Vector2) -> void:
-	if _is_pushed:
-		if previous_pattern_grid_position_cell != _pattern_grid_position_cell:
-			if not _pattern or _pattern.size == Vector2.ONE:
-				__line = Algorithms.get_line(_pattern_grid_origin_map_cell, _pattern_grid_position_map_cell, _ruler_grid_map.cell_half_offset)
-			else:
-				__line = Iterators.line(Vector2.ZERO, _pattern_grid_position_cell).to_array()
-			paint()
-	else:
-		__line[0] = _pattern_grid_origin_map_cell if not _pattern or _pattern.size == Vector2.ONE else Vector2.ZERO
+	if _pattern:
+		if _is_pushed:
+			if previous_pattern_grid_position_cell != _pattern_grid_position_cell:
+				__line = Iterators.line(Vector2.ZERO, _pattern_grid_position_cell).to_array() \
+					if _pattern.size.x * _pattern.size.y > 1 else \
+					Algorithms.get_line(_pattern_grid_origin_map_cell, _pattern_grid_position_map_cell, _ruler_grid_map.cell_half_offset)
+				paint()
+		else:
+			__line[0] = Vector2.ZERO if _pattern else _pattern_grid_origin_map_cell
 
 func _on_paint() -> void:
 	_paper.reset_changes()
@@ -48,7 +48,7 @@ var clr = Color.red * Color(1, 1, 1, 0.25)
 func _on_draw(overlay: Control) -> void:
 	if not _is_pushed:
 		return
-	if not _pattern or _pattern.size == Vector2.ONE:
+	if not _pattern:
 		var origin = _origin
 		for cell in __line:
 			_set_origin(_ruler_grid_map.map_to_world(cell))

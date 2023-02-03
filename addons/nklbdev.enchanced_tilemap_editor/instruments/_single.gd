@@ -66,14 +66,13 @@ func _set_origin(value: Vector2) -> void:
 	._set_origin(value)
 	
 	var pattern_grid_origin_map_cell = \
-		_ruler_grid_map.world_to_map(_origin) \
-		if not _pattern or _pattern.size == Vector2.ONE else \
 		_pattern.get_origin_map_cell(_origin, _ruler_grid_map) \
+		if _pattern else \
+		_ruler_grid_map.world_to_map(_origin)
 
 	if pattern_grid_origin_map_cell != _pattern_grid_origin_map_cell:
 		_pattern_grid_origin_map_cell = pattern_grid_origin_map_cell
-		
-		
+
 		_pattern_grid_origin_map_cell_position = _ruler_grid_map.map_to_world(_pattern_grid_origin_map_cell)
 		_pattern_grid_origin_position = _pattern_grid_origin_map_cell_position + \
 			_ruler_grid_map.cell_half_offset_type.line_direction * _ruler_grid_map.cell_half_offset_type.offset_sign * \
@@ -133,21 +132,40 @@ func paint() -> void:
 	if _pattern:
 		_on_paint()
 
+const __CELL_LINES: PoolVector2Array = PoolVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
 func draw(overlay: Control) -> void:
-	if _pattern:
-		_on_draw(overlay)
-	if not _pattern or _pattern.size == Vector2.ONE:
-		overlay.draw_rect(
-			Rect2(_pattern_grid_origin_map_cell_position, Vector2.ONE),
-			Color.red * Color(1, 1, 1, 0.25))
-		if _pattern_grid_position_map_cell != _pattern_grid_origin_map_cell:
-			overlay.draw_rect(
-				Rect2(_pattern_grid_position_map_cell_position, Vector2.ONE),
-				Color.red * Color(1, 1, 1, 0.25))
-	else:
-		draw_pattern_hint_at(overlay, Vector2.ZERO)
-		if _pattern_grid_position_cell != Vector2.ZERO:
-			draw_pattern_hint_at(overlay, _pattern_grid_position_cell)
+	if not _pattern:
+		return
+	_on_draw(overlay)
+	draw_pattern_hint_at(overlay, Vector2.ZERO)
+	if _pattern_grid_position_cell != Vector2.ZERO:
+		draw_pattern_hint_at(overlay, _pattern_grid_position_cell)
+
+	# Draw paper grid
+	var current_cell: Vector2 = _ruler_grid_map.world_to_map(_position)
+	var grid_color: Color = _settings.grid_color
+	var cell: Vector2
+	for y in range(current_cell.y - _settings.grid_fragment_radius, current_cell.y + _settings.grid_fragment_radius + 1):
+		for x in range(current_cell.x - _settings.grid_fragment_radius, current_cell.x + _settings.grid_fragment_radius + 1):
+			cell = Vector2(x, y)
+			__CELL_LINES.fill(_ruler_grid_map.map_to_world(cell))
+			__CELL_LINES[1].x += 1
+			__CELL_LINES[3].y += 1
+			grid_color.a = _settings.grid_color.a * (1 - cell.distance_squared_to(current_cell) / _settings.grid_fragment_radius_squared)
+			overlay.draw_multiline(__CELL_LINES, grid_color)
+
+	if _pattern.size.x * _pattern.size.y > 1:
+		# Draw pattern grid
+		current_cell = _pattern_grid_position_cell
+		grid_color = _settings.pattern_grid_color
+		for y in range(current_cell.y - _settings.grid_fragment_radius, current_cell.y + _settings.grid_fragment_radius + 1):
+			for x in range(current_cell.x - _settings.grid_fragment_radius, current_cell.x + _settings.grid_fragment_radius + 1):
+				cell = Vector2(x, y)
+				__CELL_LINES.fill(_pattern_grid_origin_position + cell * _pattern.size)
+				__CELL_LINES[1].x += _pattern.size.x
+				__CELL_LINES[3].y += _pattern.size.y
+				grid_color.a = _settings.grid_color.a * (1 - cell.distance_squared_to(current_cell) / _settings.grid_fragment_radius_squared)
+				overlay.draw_multiline(__CELL_LINES, grid_color)
 
 # for override
 func _before_pushed() -> void:
@@ -167,51 +185,42 @@ func _on_draw(overlay: Control) -> void:
 	pass
 
 func can_paint_at(map_cell: Vector2) -> bool:
-	return _selection_map == null or _selection_map.get_used_rect().has_no_area() or _selection_map.get_cellv(map_cell) == 0
+	return _selection_map == null or \
+		_selection_map.get_used_rect().has_no_area() or \
+		_selection_map.get_cellv(map_cell) == 0
 
 func paint_pattern_at(pattern_grid_cell: Vector2) -> void:
-	var pattern_position: Vector2 = __get_pattern_position(pattern_grid_cell)
-	var pattern_used_rect: Rect2 = _pattern.__map.get_used_rect()
-	if pattern_used_rect.size == Vector2.ONE:
-		var data: PoolIntArray = Common.get_map_cell_data(_pattern.__map, pattern_used_rect.position)
-		if _paint_invalid_cell or data[0] >= 0 and can_paint_at(pattern_position):
-			_paper.set_map_cell_data(pattern_position, data)
-		return
-	var pattern_position_c: Vector3 = Common.map_to_cube(pattern_position, _ruler_grid_map.cell_half_offset)
-	var pattern_used_rect_position_c: Vector3 = Common.map_to_cube(pattern_used_rect.position, _pattern.__map.cell_half_offset)
-	for y in pattern_used_rect.size.y: for x in pattern_used_rect.size.x:
-		var pattern_cell: Vector2 = pattern_used_rect.position + Vector2(x, y)
-		var data: PoolIntArray = Common.get_map_cell_data(_pattern.__map, pattern_cell)
+	var pattern_position: Vector2 = _pattern_grid_origin_map_cell_position + \
+		_ruler_grid_map.map_to_world(pattern_grid_cell * _pattern.size)
+	var data: PoolIntArray
+	for pattern_cell in _pattern.cells.keys():
+		data = _pattern.cells[pattern_cell]
 		if _paint_invalid_cell or data[0] >= 0:
-			var pattern_cell_c: Vector3 = Common.map_to_cube(pattern_cell, _pattern.__map.cell_half_offset)
-			var pattern_used_cell_c: Vector3 = pattern_cell_c - pattern_used_rect_position_c
-			var map_cell_c: Vector3 = pattern_position_c + pattern_used_cell_c
-			var map_cell: Vector2 = Common.cube_to_map(map_cell_c, _ruler_grid_map.cell_half_offset)
+			var map_cell: Vector2 = _ruler_grid_map.world_to_map(
+				pattern_position + _ruler_grid_map.map_to_world(pattern_cell))
 			if can_paint_at(map_cell):
 				if data[0] == -2:
 					data[0] = -1
 				_paper.set_map_cell_data(map_cell, data)
 
 func get_pattern_cell_for_map_cell(map_cell: Vector2) -> Vector2:
-	return (map_cell - _pattern_grid_origin_map_cell).posmodv(_pattern.size) \
-		if _ruler_grid_map.cell_half_offset == TileMap.HALF_OFFSET_DISABLED else \
-		_ruler_grid_map.world_to_map(
-			_ruler_grid_map.map_to_world(map_cell) -
-			_pattern_grid_origin_map_cell_position -
-			(_ruler_grid_map.map_to_world(_pattern.size) if (_lines_count_in_pattern & 1) else Vector2.ZERO)) \
-			.posmodv(_pattern.size)
+	var pattern_size: Vector2 = _pattern.size
+	return _ruler_grid_map.world_to_map(_ruler_grid_map.map_to_world(map_cell) -
+		(_ruler_grid_map.map_to_world(_pattern_grid_origin_map_cell +
+		((map_cell - _pattern_grid_origin_map_cell) / pattern_size).floor() * pattern_size)))
 
 func paint_pattern_cell_at(map_cell: Vector2) -> void:
 	if _lines_count_in_pattern > 0:
-		var data = _pattern.get_cell_data(get_pattern_cell_for_map_cell(map_cell))
+		var data = _pattern.cells.get(get_pattern_cell_for_map_cell(map_cell), Common.EMPTY_CELL_DATA)
 		if _paint_invalid_cell or data[0] >= 0:
 			_paper.set_map_cell_data(map_cell, data)
 
 const __cursor_color: Color = Color.red * Color(1, 1, 1, 0.25)
 func draw_pattern_hint_at(overlay: Control, pattern_grid_cell: Vector2) -> void:
-	var pattern_positon: Vector2 = __get_pattern_position(pattern_grid_cell)
-	for y in _pattern.size.y: for x in _pattern.size.x:
-		overlay.draw_rect(Rect2(pattern_positon + _ruler_grid_map.map_to_world(Vector2(x, y)), Vector2.ONE), __cursor_color)
-
-func __get_pattern_position(pattern_grid_cell: Vector2) -> Vector2:
-	return _pattern_grid_origin_map_cell_position + _ruler_grid_map.map_to_world(pattern_grid_cell * _pattern.size)
+	var pattern_size: Vector2 = _pattern.size
+	var pattern_position: Vector2 = _pattern_grid_origin_map_cell_position + \
+		_ruler_grid_map.map_to_world(pattern_grid_cell * pattern_size)
+	var cell: Vector2
+	for y in pattern_size.y: for x in pattern_size.x:
+		cell = Vector2(x, y)
+		overlay.draw_rect(Rect2(pattern_position + _ruler_grid_map.map_to_world(cell), Vector2.ONE), __cursor_color * (Color.white if _pattern.cells.has(cell) else Color(1, 1, 1, 0.5)))

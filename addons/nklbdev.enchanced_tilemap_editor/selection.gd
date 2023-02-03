@@ -67,27 +67,24 @@ func process_input_event_key(event: InputEventKey) -> bool:
 			var used_rect: Rect2 = __selection_map.get_used_rect()
 			if used_rect.has_no_area():
 				return false
-			
+
 			var data: PoolIntArray
-			data.resize(used_rect.size.x * used_rect.size.y * 4)
-			var cell: Vector2
-			var i: int
-			for y in used_rect.size.y: for x in used_rect.size.x:
-				cell = used_rect.position + Vector2(x, y)
-				if __selection_map.get_cellv(cell) < 0:
-					data[i] = TileMap.INVALID_CELL
-				else:
-					var d: PoolIntArray = Common.get_map_cell_data(__tile_map_to_select, cell)
-					data[i] = d[0]
-					data[i + 1] = d[1]
-					data[i + 2] = d[2]
-					data[i + 3] = d[3]
-					if d[0] >= 0 and cut:
-						__tile_map_to_select.set_cellv(cell, TileMap.INVALID_CELL)
-				i += 4
-			if cut:
-				__selection_map.clear()
-			var pattern: Patterns.Pattern = Patterns.Pattern.from_rect_and_data(used_rect, data, __tile_map_to_select.cell_half_offset)
+			var pattern: Patterns.Pattern = Patterns.Pattern.new()
+			var pattern_position: Vector2 = __ruler_grid_map.map_to_world(used_rect.position)
+			var pattern_cells: Dictionary
+			var origin: Vector2 = Vector2.INF
+			var end: Vector2 = -Vector2.INF
+			for cell in __selection_map.get_used_cells():
+				var cell_position = __ruler_grid_map.map_to_world(cell)
+				var pattern_cell = __ruler_grid_map.world_to_map(cell_position - pattern_position)
+				origin.x = min(origin.x, pattern_cell.x)
+				origin.y = min(origin.y, pattern_cell.y)
+				end.x = max(end.x, pattern_cell.x)
+				end.y = max(end.y, pattern_cell.y)
+				pattern_cells[pattern_cell] = Common.get_map_cell_data(__tile_map_to_select, cell)
+			pattern.size = end - origin + Vector2.ONE
+			for cell in pattern_cells.keys():
+				pattern.cells[cell - origin] = pattern_cells[cell]
 			var serialized_pattern: String = Patterns.serialize(pattern)
 			OS.clipboard = serialized_pattern
 			pattern = Patterns.deserialize(serialized_pattern)

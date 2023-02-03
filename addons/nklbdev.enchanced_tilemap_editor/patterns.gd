@@ -3,24 +3,14 @@ extends Object
 const Serialization = preload("serialization.gd")
 
 enum Rotation {
-	ROTATE_300
-	ROTATE_270,
-	ROTATE_240,
-	ROTATE_180,
-	ROTATE_120,
-	ROTATE_90,
 	ROTATE_60,
+	ROTATE_90,
+	ROTATE_120,
+	ROTATE_180,
+	ROTATE_240,
+	ROTATE_270,
+	ROTATE_300
 }
-
-const ROTATIONS: PoolRealArray = PoolRealArray([
-	PI * 1.0 / 3,
-	PI * 1.0 / 2,
-	PI * 2.0 / 3,
-	PI,
-	PI * 4.0 / 3,
-	PI * 3.0 / 2,
-	PI * 5.0 / 3,
-])
 
 enum Flipping {
 	FLIP_0,
@@ -33,6 +23,12 @@ enum Flipping {
 	FLIP_150,
 }
 
+const __ROTATIONS_RECT: PoolIntArray = PoolIntArray([0, 1, 0, 2, 0, 3, 0])
+const __ROTATIONS_HEX:  PoolIntArray = PoolIntArray([1, 0, 2, 3, 4, 0, 5])
+
+const __FLIPPINGS_RECT: PoolIntArray = PoolIntArray([0, -1,  1, -1,  2, -1,  3, -1])
+const __FLIPPINGS_HEX:  PoolIntArray = PoolIntArray([0,  1, -1,  2,  3,  4, -1,  5])
+
 enum CellTransform {
 	ROTATE_90,
 	ROTATE_180,
@@ -44,218 +40,177 @@ enum CellTransform {
 }
 
 class Pattern:
-	var FLIPPINGS: PoolVector2Array = PoolVector2Array([
-		Vector2.RIGHT, Vector2.UP,    # FLIP_0,
-		Vector2.RIGHT.rotated(PI * 10 / 6), Vector2.RIGHT.rotated(PI * 1 / 6), # FLIP_30, X будет под 60г а Y будет под 330
-		Vector2.UP,    Vector2.LEFT, # FLIP_45,
-		Vector2.RIGHT.rotated(PI * 8 / 6), Vector2.RIGHT.rotated(PI * 11 / 6), # FLIP_60, X будет под 120г а Y будет под 30
-		Vector2.LEFT,  Vector2.DOWN,  # FLIP_90,
-		Vector2.RIGHT.rotated(PI * 4 / 6), Vector2.RIGHT.rotated(PI * 7 / 6), # FLIP_120, X будет под 240г а Y будет под 150
-		Vector2.DOWN,  Vector2.RIGHT, # FLIP_135,
-		Vector2.RIGHT.rotated(PI * 2 / 6), Vector2.RIGHT.rotated(PI * 5 / 6), # FLIP_150, X будет под 300г а Y будет под 210
-	])
 	const Common = preload("common.gd")
-	var __map: TileMap
+	
+	const FLIPPING_BASES: PoolVector2Array = PoolVector2Array([
+		Vector2.RIGHT, Vector2.UP,    # 0
+		Vector2.UP,    Vector2.LEFT,  # 45
+		Vector2.LEFT,  Vector2.DOWN,  # 90
+		Vector2.DOWN,  Vector2.RIGHT, # 135
+	])
+
+	const ROTATION_BASES: PoolVector2Array = PoolVector2Array([
+		Vector2.UP,   Vector2.RIGHT, # 90
+		Vector2.LEFT, Vector2.UP,    # 180
+		Vector2.DOWN, Vector2.LEFT,  # 270
+	])
+
 	var size: Vector2
-	var used_cells_count: int
-	var half_offset_orientation: int
-	func _init(_half_offset_orientation: int = Common.HalfOffsetOrientation.NOT_OFFSETTED) -> void:
-		half_offset_orientation = _half_offset_orientation
-		__map = TileMap.new()
-		__map.cell_size = Vector2.ONE
-		__map.mode = TileMap.MODE_CUSTOM
-		__map.cell_half_offset = TileMap.HALF_OFFSET_X if half_offset_orientation == Common.HalfOffsetOrientation.HORIZONTAL_OFFSETTED else \
-			(TileMap.HALF_OFFSET_Y if half_offset_orientation == Common.HalfOffsetOrientation.VERTICAL_OFFSETTED else TileMap.HALF_OFFSET_DISABLED)
-		__map.cell_custom_transform = Transform2D.IDENTITY.scaled(Common.CELL_HALF_OFFSET_TYPES[__map.cell_half_offset].cell_regular_scale)
+	var cells: Dictionary
+
+	const __temp_map_cell_data: PoolIntArray = PoolIntArray([0, 0, 0, 0])
+	func _init(size: Vector2 = Vector2.ZERO, data: PoolIntArray = []) -> void:
+		assert(size == size.abs())
+		assert(size.x * size.y * 4 == data.size())
+		self.size = size
+		var i: int
+		for y in size.y: for x in size.x:
+			__temp_map_cell_data[0] = data[i]
+			__temp_map_cell_data[1] = data[i + 1]
+			__temp_map_cell_data[2] = data[i + 2]
+			__temp_map_cell_data[3] = data[i + 3]
+			cells[Vector2(x, y)] = __temp_map_cell_data
+			i += 4
 
 	func create_icon(tile_map: TileMap, icon_size: Vector2) -> Texture:
 		return null
 
-	func duplicate() -> Pattern:
-		var pattern = Pattern.new(half_offset_orientation)
-		for cell in __map.get_used_cells():
-			Common.set_map_cell_data(pattern.__map, cell, Common.get_map_cell_data(__map, cell))
-		pattern.size = size
-		pattern.used_cells_count = used_cells_count
-		return pattern
-
-	func get_cell_data(cell: Vector2) -> PoolIntArray:
-		cell = cell.posmodv(size)
-		return Common.get_map_cell_data(__map, cell)
-
-	func set_cell_data(cell: Vector2, data: PoolIntArray) -> void:
-		prints(cell, data)
-		Common.set_map_cell_data(__map, cell, data)
-		__map.update_dirty_quadrants()
-		size = __map.get_used_rect().size
-		used_cells_count = __map.get_used_cells().size()
-
-	func normalize() -> void:
-		return
-		print("normalize")
-		for cell in __map.get_used_cells():
-			prints(cell, Common.get_map_cell_data(__map, cell))
-		var used_rect_position: Vector2 = __map.get_used_rect().position
-		if size == Vector2.ONE and used_rect_position != Vector2.ZERO:
-			Common.set_map_cell_data(__map, Vector2.ZERO, Common.get_map_cell_data(__map, used_rect_position))
-			__map.set_cellv(used_rect_position, TileMap.INVALID_CELL)
-			return
-		if used_rect_position == Vector2.ZERO:
-			return
-		var map: TileMap = __map.duplicate(0)
-		if __map.map_to_world(used_rect_position + Vector2.ONE) - __map.map_to_world(used_rect_position) != \
-			__map.map_to_world(Vector2.ONE) - __map.map_to_world(Vector2.ZERO):
-			__map.cell_half_offset = Common.CELL_HALF_OFFSET_TYPES[__map.cell_half_offset].opposite.index
-		__map.clear()
-		for cell in map.get_used_cells():
-			Common.set_map_cell_data(__map, cell - used_rect_position, Common.get_map_cell_data(map, cell))
-		size = __map.get_used_rect().size
-		print("normalized")
-		for cell in __map.get_used_cells():
-			prints(cell, Common.get_map_cell_data(__map, cell))
-
 	func get_origin_map_cell(world_position: Vector2, ruler_grid_map: TileMap) -> Vector2:
+		if size == Vector2.ONE:
+			return ruler_grid_map.world_to_map(world_position)
 		var linear_size: Vector2 = ruler_grid_map.cell_half_offset_type.conv(size)
 		return ruler_grid_map.world_to_map(
 			world_position + ruler_grid_map.cell_half_offset_type.conv(
 				(Vector2.ONE - linear_size + Vector2.RIGHT *
 				((int(linear_size.y > 1) + (int(linear_size.y) & 1)) * ruler_grid_map.cell_half_offset_type.offset)) / 2))
 
-	func rotate(rotation: int) -> void:
-		var map: TileMap = __map.duplicate(0)
-		__map.clear()
-		map.cell_custom_transform = map.cell_custom_transform.rotated(ROTATIONS[rotation])
-		for cell in map.get_used_cells():
-			Common.set_map_cell_data(__map, __map.world_to_map(map.map_to_world(cell)), Common.get_map_cell_data(map, cell))
-		size = __map.get_used_rect().size
-		normalize()
+	func rotate_ccw(steps: int, cell_half_offset: int) -> void:
+		if cell_half_offset == TileMap.HALF_OFFSET_DISABLED:
+			__rotate_ccw_rect(__ROTATIONS_RECT[steps])
+		else:
+			__rotate_ccw_hex(__ROTATIONS_HEX[steps], cell_half_offset)
 
-	func flip(flipping: int) -> void:
-		var map: TileMap = __map.duplicate(0)
-		__map.clear()
-		var target_cell: Vector2
-		if map.cell_half_offset == TileMap.HALF_OFFSET_DISABLED:
-			for cell in map.get_used_cells():
-				match flipping:
-					Flipping.FLIP_0: target_cell = Vector2(cell.x, -cell.y)
-					Flipping.FLIP_45: target_cell = Vector2(-cell.y, -cell.x)
-					Flipping.FLIP_90: target_cell = Vector2(-cell.x, cell.y)
-					Flipping.FLIP_135: target_cell = Vector2(cell.y, cell.x)
-					_: assert(false)
-				Common.set_map_cell_data(__map, target_cell, Common.get_map_cell_data(map, cell))
-			return
-		var vertical: bool = map.cell_half_offset == TileMap.HALF_OFFSET_Y or map.cell_half_offset == TileMap.HALF_OFFSET_NEGATIVE_Y
-		for cell in map.get_used_cells():
-			var c: Vector3 = Common.map_to_cube(cell, map.cell_half_offset)
-			if vertical:
-				match flipping:
-					Flipping.FLIP_0:   c = Vector3( c.x,  c.z,  c.y)
-					Flipping.FLIP_30:  c = Vector3(-c.y, -c.x, -c.z)
-					Flipping.FLIP_60:  c = Vector3( c.z,  c.y,  c.x)
-					Flipping.FLIP_90:  c = Vector3(-c.x, -c.z, -c.y)
-					Flipping.FLIP_120: c = Vector3( c.y,  c.x,  c.z)
-					Flipping.FLIP_150: c = Vector3(-c.z, -c.y, -c.x)
-			else:
-				match flipping:
-					Flipping.FLIP_0:   c = Vector3(-c.z, -c.y, -c.x)
-					Flipping.FLIP_30:  c = Vector3( c.x,  c.z,  c.y)
-					Flipping.FLIP_60:  c = Vector3(-c.y, -c.x, -c.z)
-					Flipping.FLIP_90:  c = Vector3( c.z,  c.y,  c.x)
-					Flipping.FLIP_120: c = Vector3(-c.x, -c.z, -c.y)
-					Flipping.FLIP_150: c = Vector3( c.y,  c.x,  c.z)
-			target_cell = Common.cube_to_map(c, __map.cell_half_offset)
-			Common.set_map_cell_data(__map, target_cell, Common.get_map_cell_data(map, cell))
-		size = __map.get_used_rect().size
-		normalize()
+	func flip(dir: int, cell_half_offset: int) -> void:
+		if cell_half_offset == TileMap.HALF_OFFSET_DISABLED:
+			__flip_rect(__FLIPPINGS_RECT[dir])
+		else:
+			__flip_hex(__FLIPPINGS_HEX[dir], cell_half_offset)
 
 	func transform_cells(cell_transform: int) -> void:
-		var cell_data: PoolIntArray
-		for cell in __map.get_used_cells():
-			cell_data = Common.get_map_cell_data(__map, cell)
-			match cell_transform:
-				CellTransform.ROTATE_90: cell_data[1] = Common.rotate_cell_transform(cell_data[1], 1)
-				CellTransform.ROTATE_180: cell_data[1] = Common.rotate_cell_transform(cell_data[1], 2)
-				CellTransform.ROTATE_270: cell_data[1] = Common.rotate_cell_transform(cell_data[1], 3)
-				CellTransform.FLIP_0: cell_data[1] ^= Common.CELL_Y_FLIPPED
-				CellTransform.FLIP_45: cell_data[1] ^= (Common.CELL_X_FLIPPED | Common.CELL_Y_FLIPPED | Common.CELL_TRANSPOSED)
-				CellTransform.FLIP_90: cell_data[1] ^= Common.CELL_X_FLIPPED
-				CellTransform.FLIP_135: cell_data[1] ^= Common.CELL_TRANSPOSED
-			Common.set_map_cell_data(__map, cell, cell_data)
+		match cell_transform:
+			CellTransform.ROTATE_90: for cell in cells.keys(): cells[cell][1] = Common.rotate_cell_transform(cells[cell][1], 1)
+			CellTransform.ROTATE_180: for cell in cells.keys(): cells[cell][1] = Common.rotate_cell_transform(cells[cell][1], 2)
+			CellTransform.ROTATE_270: for cell in cells.keys(): cells[cell][1] = Common.rotate_cell_transform(cells[cell][1], 3)
+			CellTransform.FLIP_0: for cell in cells.keys(): cells[cell][1] ^= Common.CELL_Y_FLIPPED
+			CellTransform.FLIP_45: for cell in cells.keys(): cells[cell][1] ^= Common.CELL_X_FLIPPED | Common.CELL_Y_FLIPPED | Common.CELL_TRANSPOSED
+			CellTransform.FLIP_90: for cell in cells.keys(): cells[cell][1] ^= Common.CELL_X_FLIPPED
+			CellTransform.FLIP_135: for cell in cells.keys(): cells[cell][1] ^= Common.CELL_TRANSPOSED
 
-	const __temp_map_cell_data: PoolIntArray = PoolIntArray([0, 0, 0, 0])
-	static func from_rect_and_data(rect: Rect2, data: PoolIntArray, original_cell_half_offset: int) -> Pattern:
-		rect = rect.abs()
-		assert(rect.size.x * rect.size.y * 4 == data.size())
-		var original_half_offset_type: Common.CellHalfOffsetType = Common.CELL_HALF_OFFSET_TYPES[original_cell_half_offset]
-		var pattern: Pattern = Pattern.new(original_half_offset_type.offset_orientation)
-		var map: TileMap = pattern.__map
-		if original_cell_half_offset > 2:
-			map = map.duplicate(0)
-			map.cell_half_offset = original_cell_half_offset
-		var i: int
-		for y in range(rect.position.y, rect.end.y): for x in range(rect.position.x, rect.end.x):
-			__temp_map_cell_data[0] = data[i]
-			__temp_map_cell_data[1] = data[i + 1]
-			__temp_map_cell_data[2] = data[i + 2]
-			__temp_map_cell_data[3] = data[i + 3]
-			Common.set_map_cell_data(
-				pattern.__map,
-				pattern.__map.world_to_map(map.map_to_world(Vector2(x, y))),
-				__temp_map_cell_data)
-			i += 4
-		pattern.size = pattern.__map.get_used_rect().size
-		pattern.used_cells_count = pattern.__map.get_used_cells().size()
-		pattern.normalize()
-		return pattern
+
+
+	func __rotate_ccw_rect(steps: int) -> void: # RectangularRotations
+		steps = (posmod(steps, 4) - 1) * 2
+		if steps >= 0:
+			__transform_rect(ROTATION_BASES[steps], ROTATION_BASES[steps + 1])
+
+	func __flip_rect(dir: int) -> void:
+		dir = posmod(dir, 4) * 2
+		__transform_rect(FLIPPING_BASES[dir], FLIPPING_BASES[dir + 1])
+
+	func __transform_rect(base_x, base_y) -> void:
+		var new_cells: Dictionary
+		var transform: Transform2D = Transform2D(base_x, base_y, Vector2.ZERO)
+		var new_cell: Vector2
+		var position: Vector2 = Vector2.INF
+		var end: Vector2 = -Vector2.INF
+		for cell in cells.keys():
+			new_cell = transform.xform(cell).round()
+			position.x = min(position.x, new_cell.x)
+			position.y = min(position.y, new_cell.y)
+			end.x = max(end.x, new_cell.x)
+			end.y = max(end.y, new_cell.y)
+			new_cells[new_cell] = cells[cell]
+		cells.clear()
+		size = end - position + Vector2.ONE
+		for cell in new_cells.keys():
+			cells[cell - position] = new_cells[cell]
+
+
+	func __rotate_ccw_hex(steps: int, cell_half_offset: int) -> void:
+		__transform_hex(0, 1, 2, steps, false, cell_half_offset)
+
+	func __flip_hex(dir: int, cell_half_offset: int) -> void:
+		__transform_hex(1, 0, 2, posmod(dir + cell_half_offset % 3, 6) + 1, true, cell_half_offset)
+
+	func __transform_hex(idx_x: int, idx_y: int, idx_z: int, steps: int, paired: bool, cell_half_offset: int) -> void:
+		steps = posmod(steps, 6)
+		var sig: int = 1 - (steps & 1) * 2
+
+		if paired:
+			steps = posmod(1 - steps, 3) 
+
+		idx_x = (idx_x + steps) % 3
+		idx_y = (idx_y + steps) % 3
+		idx_z = (idx_z + steps) % 3
+
+		var new_cells: Dictionary
+		var new_cell: Vector2
+		var position: Vector2 = Vector2.INF
+		for cell in cells.keys():
+			var hex: Vector3 = Common.map_to_cube(cell, cell_half_offset)
+			hex = sig * Vector3(hex[idx_x], hex[idx_y], hex[idx_z])
+			position.x = min(position.x, hex.x)
+			position.y = min(position.y, hex.y)
+			new_cells[hex] = cells[cell]
+		cells.clear()
+		var cube_position: Vector3 = Vector3(position.x, position.y, -position.x-position.y)
+		position = Vector2.INF
+		var new_new_cells: Dictionary
+		for hex in new_cells.keys():
+			new_cell = Common.cube_to_map(hex - cube_position, cell_half_offset)
+			position.x = min(position.x, new_cell.x)
+			position.y = min(position.y, new_cell.y)
+			new_new_cells[new_cell] = new_cells[hex]
+		size = -Vector2.INF
+		for cell in new_new_cells.keys():
+			new_cell = cell - position
+			cells[new_cell] = new_new_cells[cell]
+			size.x = max(size.x, new_cell.x)
+			size.y = max(size.y, new_cell.y)
+		size += Vector2.ONE
+
+
+
 
 const Common = preload("common.gd")
 static func serialize(pattern: Pattern) -> String:
-	print("serialize")
-	var used_rect: Rect2 = pattern.__map.get_used_rect()
-	var previous_cell_data: PoolIntArray = PoolIntArray()
-	var repititions_count: int
-	var compressed_data: Array = []
-	for y in range(used_rect.position.y, used_rect.end.y):
-		for x in range(used_rect.position.x, used_rect.end.x):
-			var cell = Vector2(x, y)
-			var cell_data: PoolIntArray = Common.get_map_cell_data(pattern.__map, cell)
-			print(cell_data)
-			if cell_data == previous_cell_data:
-				compressed_data[compressed_data.size() - 1] += 1
-			else:
-				compressed_data.append_array(cell_data)
-				compressed_data.append(1)
-				previous_cell_data = cell_data
-	prints(pattern.size, pattern.used_cells_count, pattern.half_offset_orientation)
+	var data: PoolIntArray
+	data.resize(pattern.cells.size() * 6)
+	var cell_data: PoolIntArray
+	var i: int
+	for cell in pattern.cells.keys():
+		cell_data = pattern.cells[cell]
+		data[i    ] = cell.x
+		data[i + 1] = cell.y
+		data[i + 2] = cell_data[0]
+		data[i + 3] = cell_data[1]
+		data[i + 4] = cell_data[2]
+		data[i + 5] = cell_data[3]
+		i += 6
 	return to_json({
 		size = Serialization.serialize(pattern.size),
-		used_cells_count = pattern.used_cells_count,
-		half_offset_orientation = pattern.half_offset_orientation,
-		compressed_data = compressed_data
+		data = data
 	})
 
 static func deserialize(serialized_data: String) -> Pattern:
-	print("deserialize")
-	var data = parse_json(serialized_data)
-	print(data)
-	var pattern: Pattern = Pattern.new(data.half_offset_orientation)
-	pattern.size = Serialization.deserialize(data.size, TYPE_VECTOR2)
-	pattern.used_cells_count = data.used_cells_count
-	pattern.half_offset_orientation = data.half_offset_orientation
-	var x: int
-	var y: int
-	var d: PoolIntArray = PoolIntArray([0, 0, 0, 0])
-	for i in range(0, data.compressed_data.size(), 5):
-		d[0] = data.compressed_data[i]
-		d[1] = data.compressed_data[i + 1]
-		d[2] = data.compressed_data[i + 2]
-		d[3] = data.compressed_data[i + 3]
-		for r in data.compressed_data[i + 4]:
-			print(d)
-			Common.set_map_cell_data(pattern.__map, Vector2(x, y), d)
-			x += 1
-			if x >= pattern.size.x:
-				x = 0
-				y += 1
-	prints(pattern.size, pattern.used_cells_count, pattern.half_offset_orientation)
+	var raw_data = parse_json(serialized_data)
+	var pattern: Pattern = Pattern.new()
+	pattern.size = Serialization.deserialize(raw_data.size, TYPE_VECTOR2)
+	var cell_data: PoolIntArray = PoolIntArray([0, 0, 0, 0])
+	for i in range(0, raw_data.data.size(), 6):
+		cell_data[0] = raw_data.data[i + 2]
+		cell_data[1] = raw_data.data[i + 3]
+		cell_data[2] = raw_data.data[i + 4]
+		cell_data[3] = raw_data.data[i + 5]
+		pattern.cells[Vector2(raw_data.data[i], raw_data.data[i + 1])] = cell_data
 	return pattern

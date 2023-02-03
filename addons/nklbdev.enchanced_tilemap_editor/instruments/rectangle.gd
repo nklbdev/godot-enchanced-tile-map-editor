@@ -23,9 +23,9 @@ func _on_moved(from_position: Vector2, previous_pattern_grid_position_cell: Vect
 		if size == Vector2.ZERO:
 			pass
 		elif size.x == 0:
-			size.y = floor(min(_drawing_area_limit / _pattern.used_cells_count, abs(size.y))) * sign(size.y)
+			size.y = floor(min(_drawing_area_limit / _pattern.cells.size(), abs(size.y))) * sign(size.y)
 		elif size.y == 0:
-			size.x = floor(min(_drawing_area_limit / _pattern.used_cells_count, abs(size.x))) * sign(size.x)
+			size.x = floor(min(_drawing_area_limit / _pattern.cells.size(), abs(size.x))) * sign(size.x)
 		else:
 			size = Common.limit_area(size, _drawing_area_limit).floor()
 		if size != __size:
