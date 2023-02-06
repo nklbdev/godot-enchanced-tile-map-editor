@@ -68,7 +68,7 @@ func _init(title: String, icon_name: String).(title, icon_name) -> void:
 									hint_tooltip = "Zoom Out",
 									focus_mode = FOCUS_NONE,
 									shortcut = Common.create_shortcut(KEY_MASK_CMD | KEY_MINUS),
-								}).connected("pressed", "__zoom_content", [1 / 1.5]),
+								}).connected("pressed", "__zoom_content", [1 / 1.25]),
 								tb.node(ToolButton.new(), "__zoom_reset_button").with_props({
 									hint_tooltip = "Zoom Reset",
 									focus_mode = FOCUS_NONE,
@@ -81,7 +81,7 @@ func _init(title: String, icon_name: String).(title, icon_name) -> void:
 									hint_tooltip = "Zoom In",
 									focus_mode = FOCUS_NONE,
 									shortcut = Common.create_shortcut(KEY_MASK_CMD | KEY_PLUS),
-								}).connected("pressed", "__zoom_content", [1.5]),
+								}).connected("pressed", "__zoom_content", [1.25]),
 							]),
 						tb.node(ToolButton.new(), "__center_view_button").with_props({
 							icon = Common.get_icon("center_view"),
@@ -190,11 +190,14 @@ func __on_content_panel_gui_input(event: InputEvent) -> void:
 				else:
 					match event.button_index:
 						BUTTON_WHEEL_UP:
-							__zoom_content(1.5, event.position)
+							__zoom_content(1.25, event.position)
 							return
 						BUTTON_WHEEL_DOWN:
-							__zoom_content(1 / 1.5, event.position)
+							__zoom_content(1 / 1.25, event.position)
 							return
+		elif event is InputEventPanGesture:
+			__content_scaler.rect_position += event.delta
+			__update_center_view_button()
 		elif event is InputEventMouseMotion:
 			if __content_dragging_button > 0:
 				if __warping:
