@@ -13,6 +13,7 @@ class TileOnTexture:
 	var __tile_color: Color
 	var __tile_highlight_color: Color
 	const __tile_shadow_color: Color = Color(0, 0, 0, 0.125)
+	const __tile_highlight_transparency: Color = Color(1, 1, 1, 0.0625)
 	var __hover: bool
 	func _init(tile_id: int, tile_set: TileSet) -> void:
 		self.tile_id = tile_id
@@ -24,7 +25,7 @@ class TileOnTexture:
 			tile_set.autotile_get_size(tile_id)
 		__subtile_spacing = Vector2.ONE * tile_set.autotile_get_spacing(tile_id)
 		__tile_color = Common.TILE_COLORS[__tile_mode]
-		__tile_highlight_color = __tile_color * Color(1, 1, 1, 0.0625)
+		__tile_highlight_color = __tile_color * __tile_highlight_transparency
 
 		rect_position = __tile_region.position
 		rect_min_size = __tile_region.size

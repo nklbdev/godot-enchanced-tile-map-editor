@@ -20,10 +20,13 @@ static func serialize(value):
 			assert(false, "Can not serialize RID")
 			return 0
 		TYPE_OBJECT:
-			assert(false, "Can not serialize Object, use serialize_object method instead")
-			return 0
+			var result: Dictionary
+			for property in value.get_property_list():
+				if property.name != "Script Variables" and property.name != "script":
+					result[property.name] = serialize(value.get(property.name))
+			return result
 		TYPE_DICTIONARY:
-			var result: Dictionary = {}
+			var result: Dictionary
 			for key in value as Dictionary:
 				result[key] = serialize(value.get(key))
 			return result
@@ -36,17 +39,17 @@ static func serialize(value):
 		TYPE_VECTOR3_ARRAY: return __serialize_array(value)
 		TYPE_COLOR_ARRAY: return __serialize_array(value)
 
-static func serialize_object(object: Object, property_names: PoolStringArray) -> Dictionary:
-	var result: Dictionary = {}
-	for property_name in property_names:
-		if property_name in object:
-			result[property_name] = serialize(object.get(property_name))
-	return result
-
 static func __serialize_array(array) -> Array:
 	var result: Array = []
 	for item in array:
 		result.push_back(serialize(item))
+	return result
+
+static func serialize_object(object: Object, exceptions: PoolStringArray = []) -> Dictionary:
+	var result: Dictionary
+	for property in object.get_property_list():
+		if property.name != "Script Variables" and property.name != "script" and not property.name in exceptions:
+			result[property.name] = serialize(object.get(property.name))
 	return result
 
 static func deserialize(value, type):
@@ -86,14 +89,6 @@ static func deserialize(value, type):
 		TYPE_VECTOR2_ARRAY: return PoolVector2Array(deserialize_array_of_type(value, TYPE_VECTOR2))
 		TYPE_VECTOR3_ARRAY: return PoolVector3Array(deserialize_array_of_type(value, TYPE_VECTOR3))
 		TYPE_COLOR_ARRAY: return PoolColorArray(deserialize_array_of_type(value, TYPE_COLOR))
-
-static func deserialize_dictionary_by_type_map(dictionary: Dictionary, type_map: Dictionary) -> Dictionary:
-	var result: Dictionary = {}
-	for item_key in dictionary.keys():
-		var type = type_map.get(item_key)
-		if type != null:
-			result[item_key] = deserialize(dictionary[item_key], type)
-	return result
 
 static func deserialize_array_of_type(array: Array, type: int) -> Array:
 	var result: Array = []

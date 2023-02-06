@@ -144,28 +144,36 @@ func draw(overlay: Control) -> void:
 	# Draw paper grid
 	var current_cell: Vector2 = _ruler_grid_map.world_to_map(_position)
 	var grid_color: Color = _settings.grid_color
+	var grid_color_a: float = grid_color.a
 	var cell: Vector2
-	for y in range(current_cell.y - _settings.grid_fragment_radius, current_cell.y + _settings.grid_fragment_radius + 1):
-		for x in range(current_cell.x - _settings.grid_fragment_radius, current_cell.x + _settings.grid_fragment_radius + 1):
+	var radius: int = _settings.grid_fragment_radius
+	var radius_squared: int = radius * radius
+	for y in range(current_cell.y - radius, current_cell.y + radius + 1):
+		for x in range(current_cell.x - radius, current_cell.x + radius + 1):
 			cell = Vector2(x, y)
 			__CELL_LINES.fill(_ruler_grid_map.map_to_world(cell))
 			__CELL_LINES[1].x += 1
 			__CELL_LINES[3].y += 1
-			grid_color.a = _settings.grid_color.a * (1 - cell.distance_squared_to(current_cell) / _settings.grid_fragment_radius_squared)
-			overlay.draw_multiline(__CELL_LINES, grid_color)
+			grid_color.a = grid_color_a * (1 - cell.distance_squared_to(current_cell) / radius_squared)
+			if grid_color.a > 0:
+				overlay.draw_multiline(__CELL_LINES, grid_color)
 
 	if _pattern.size.x * _pattern.size.y > 1:
 		# Draw pattern grid
 		current_cell = _pattern_grid_position_cell
 		grid_color = _settings.pattern_grid_color
-		for y in range(current_cell.y - _settings.grid_fragment_radius, current_cell.y + _settings.grid_fragment_radius + 1):
-			for x in range(current_cell.x - _settings.grid_fragment_radius, current_cell.x + _settings.grid_fragment_radius + 1):
+		grid_color_a = grid_color.a
+		radius = _settings.pattern_grid_fragment_radius
+		radius_squared = radius * radius
+		for y in range(current_cell.y - radius, current_cell.y + radius + 1):
+			for x in range(current_cell.x - radius, current_cell.x + radius + 1):
 				cell = Vector2(x, y)
 				__CELL_LINES.fill(_pattern_grid_origin_position + cell * _pattern.size)
 				__CELL_LINES[1].x += _pattern.size.x
 				__CELL_LINES[3].y += _pattern.size.y
-				grid_color.a = _settings.grid_color.a * (1 - cell.distance_squared_to(current_cell) / _settings.grid_fragment_radius_squared)
-				overlay.draw_multiline(__CELL_LINES, grid_color)
+				grid_color.a = max(0, grid_color_a * (1 - cell.distance_squared_to(current_cell) / radius_squared))
+				if grid_color.a > 0:
+					overlay.draw_multiline(__CELL_LINES, grid_color)
 
 # for override
 func _before_pushed() -> void:
@@ -215,12 +223,12 @@ func paint_pattern_cell_at(map_cell: Vector2) -> void:
 		if _paint_invalid_cell or data[0] >= 0:
 			_paper.set_map_cell_data(map_cell, data)
 
-const __cursor_color: Color = Color.red * Color(1, 1, 1, 0.25)
 func draw_pattern_hint_at(overlay: Control, pattern_grid_cell: Vector2) -> void:
 	var pattern_size: Vector2 = _pattern.size
 	var pattern_position: Vector2 = _pattern_grid_origin_map_cell_position + \
 		_ruler_grid_map.map_to_world(pattern_grid_cell * pattern_size)
 	var cell: Vector2
+	var color = _settings.cursor_color
 	for y in pattern_size.y: for x in pattern_size.x:
 		cell = Vector2(x, y)
-		overlay.draw_rect(Rect2(pattern_position + _ruler_grid_map.map_to_world(cell), Vector2.ONE), __cursor_color * (Color.white if _pattern.cells.has(cell) else Color(1, 1, 1, 0.5)))
+		overlay.draw_rect(Rect2(pattern_position + _ruler_grid_map.map_to_world(cell), Vector2.ONE), color * (Color.white if _pattern.cells.has(cell) else Color(1, 1, 1, 0.5)))

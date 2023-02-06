@@ -44,7 +44,6 @@ func _on_paint() -> void:
 		for cell in __line:
 			paint_pattern_at(cell)
 
-var clr = Color.red * Color(1, 1, 1, 0.25)
 func _on_draw(overlay: Control) -> void:
 	if not _is_pushed:
 		return

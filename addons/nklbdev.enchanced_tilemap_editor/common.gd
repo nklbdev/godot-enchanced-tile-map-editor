@@ -1,6 +1,7 @@
 extends Object
 
 const Iterators = preload("iterators.gd")
+const Serialization = preload("serialization.gd")
 
 const PLUGIN_FOLDER = "res://addons/nklbdev.enchanced_tilemap_editor/"
 
@@ -131,8 +132,8 @@ class Settings:
 	var pattern_grid_color: Color
 	var axis_color: Color
 	var axis_fragment_radius: int
-	var grid_fragment_radius: int setget __set_grid_fragment_radius
-	var grid_fragment_radius_squared: int
+	var grid_fragment_radius: int
+	var pattern_grid_fragment_radius: int
 	var drawing_area_limit: int
 	
 	signal settings_changed
@@ -151,6 +152,7 @@ class Settings:
 		__register_project_setting("drawn_cells_color", "drawn_cells_color", TYPE_COLOR, Color(1, 0.5, 0.25, 0.25))
 		__register_project_setting("pattern_grid_color", "pattern_grid_color", TYPE_COLOR, Color(1, 0.5, 0.25, 0.25))
 		__register_project_setting("grid_fragment_radius", "grid_fragment_radius", TYPE_INT, 10)
+		__register_project_setting("pattern_grid_fragment_radius", "pattern_grid_fragment_radius", TYPE_INT, 10)
 		__register_project_setting("axis_fragment_radius", "axis_fragment_radius", TYPE_INT, 20)
 		__register_project_setting("drawing_area_limit", "drawing_area_limit", TYPE_INT, 128 * 128)
 		ProjectSettings.connect("project_settings_changed", self, "__rescan_project_settings")
@@ -169,10 +171,6 @@ class Settings:
 	
 	func __register_project_setting(property_name: String, setting_path_in_plugin_section: String, setting_type: int, default_value) -> void:
 		__project_settings_registry.append({ property_name = property_name, setting_path_in_plugin_section = setting_path_in_plugin_section, setting_type = setting_type, default_value = default_value })
-
-	func __set_grid_fragment_radius(value: int) -> void:
-		grid_fragment_radius = value
-		grid_fragment_radius_squared = value * value
 
 	func __rescan_project_settings() -> void:
 		if __scan_project_settings():
