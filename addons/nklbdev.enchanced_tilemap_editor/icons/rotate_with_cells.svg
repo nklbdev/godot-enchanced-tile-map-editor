@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   height="16"
+   viewBox="0 0 16 16"
+   width="16"
+   version="1.1"
+   id="svg4"
+   sodipodi:docname="transform_with_cells.svg"
+   inkscape:version="1.2.2 (732a01da63, 2022-12-09)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs8" />
+  <sodipodi:namedview
+     id="namedview6"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="true"
+     inkscape:zoom="22.627417"
+     inkscape:cx="10.31934"
+     inkscape:cy="11.159029"
+     inkscape:window-width="2400"
+     inkscape:window-height="1271"
+     inkscape:window-x="3191"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg4">
+    <inkscape:grid
+       type="xygrid"
+       id="grid2414"
+       spacingy="1"
+       empspacing="4" />
+  </sodipodi:namedview>
+  <g
+     aria-label="2"
+     id="text468"
+     style="font-weight:bold;font-size:6.93333px;font-family:Tahoma;-inkscape-font-specification:'Tahoma Bold';fill:#e0e0e0;fill-opacity:0.996078;fill-rule:evenodd;stroke:#e0e0e0;stroke-width:0;stroke-linejoin:round;stroke-opacity:0.996078"
+     transform="matrix(0,2,-2.0000002,0,29.999999,-14)">
+    <path
+       d="M 12.851822,13.569529 H 9.1481777 v -0.822656 q 0.4705727,-0.372396 0.8429684,-0.704167 0.3757809,-0.33177 0.6601559,-0.629687 0.36901,-0.389323 0.534896,-0.683854 0.165885,-0.294531 0.165885,-0.605989 0,-0.3520831 -0.209896,-0.538281 -0.209896,-0.1895832 -0.585677,-0.1895832 -0.192968,0 -0.365624,0.047396 -0.169271,0.047396 -0.3453128,0.121875 Q 9.6729171,9.6424471 9.5510421,9.7236971 9.4291672,9.804947 9.3682297,9.845572 H 9.2700527 V 8.7453121 Q 9.4833338,8.6437497 9.9369794,8.5388018 10.390625,8.4304685 10.810417,8.4304685 q 0.897135,0 1.357551,0.399479 0.463802,0.399479 0.463802,1.1239578 0,0.4468747 -0.209896,0.8768227 -0.209896,0.426562 -0.697395,0.917447 -0.304688,0.301302 -0.592448,0.538281 -0.28776,0.233594 -0.416406,0.331771 h 2.136197 z"
+       id="path3019"
+       style="stroke-width:0" />
+  </g>
+  <path
+     id="rect456"
+     style="fill:#e0e0e0;fill-opacity:0.99607843;fill-rule:evenodd;stroke:#e0e0e0;stroke-width:0;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:0.996078"
+     d="M 2 1 C 1.4460006 1 1 1.4460006 1 2 L 1 14 C 1 14.553999 1.4460006 15 2 15 L 14 15 C 14.553999 15 15 14.553999 15 14 L 15 2 C 15 1.4460006 14.553999 1 14 1 L 2 1 z M 2 2 L 14 2 L 14 14 L 2 14 L 2 2 z " />
+</svg>

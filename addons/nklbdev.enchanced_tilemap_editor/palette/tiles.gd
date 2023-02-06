@@ -82,9 +82,9 @@ func _init(selection_paper: Selection, tiles_paper: Paper, eraser: Instrument).(
 		tb.node(HBoxContainer.new()) \
 			.with_children([
 				tb.node(MenuButton.new(), "__rotation_menu_button") \
-					.with_props({ text = "Rotate...", icon = Common.get_icon("random") }),
+					.with_props({ text = "Rotate...", icon = Common.get_icon("rotate") }),
 				tb.node(MenuButton.new(), "__flipping_menu_button") \
-					.with_props({ text = "Flip...", icon = Common.get_icon("random") }),
+					.with_props({ text = "Flip...", icon = Common.get_icon("flip") }),
 		])
 	]).build()
 	PopupMenuBuilder.new(__rotation_menu_button.get_popup()) \
@@ -93,33 +93,33 @@ func _init(selection_paper: Selection, tiles_paper: Paper, eraser: Instrument).(
 			{ compatibility = Common.HalfOffsetCompatibilityFlags.OFFSETTED, rotation = Patterns.Rotation.ROTATE_60 }) \
 		.submenu("rotate_90", "Rotate 90°...", 1, null, PopupMenuBuilder.new() \
 			.connected("index_pressed", self, "__on_transform_popup_menu_item_pressed", true) \
-			.item("random", "with cells", 0, KEY_MASK_ALT | KEY_MASK_CTRL | KEY_R,
+			.item("rotate_with_cells", "with cells", 0, KEY_MASK_ALT | KEY_MASK_CTRL | KEY_R,
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.NOT_OFFSETTED, rotation = Patterns.Rotation.ROTATE_90, cell_transform = Patterns.CellTransform.ROTATE_90 }) \
-			.item("random", "without cells", 1, KEY_MASK_CTRL | KEY_R,
+			.item("rotate_without_cells", "without cells", 1, KEY_MASK_CTRL | KEY_R,
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.NOT_OFFSETTED, rotation = Patterns.Rotation.ROTATE_90 }) \
-			.item("random", "cells only", 2, KEY_MASK_ALT | KEY_R,
+			.item("rotate_only_cells", "cells only", 2, KEY_MASK_ALT | KEY_R,
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.ALL, cell_transform = Patterns.CellTransform.ROTATE_90 }) \
 			.get_popup_menu()) \
 		.item("rotate_120", "Rotate 120° without cells", 2, 0,
 			{ compatibility = Common.HalfOffsetCompatibilityFlags.OFFSETTED, rotation = Patterns.Rotation.ROTATE_120 }) \
 		.submenu("rotate_180", "Rotate 180°...", 3, null, PopupMenuBuilder.new() \
 			.connected("index_pressed", self, "__on_transform_popup_menu_item_pressed", true) \
-			.item("random", "with cells", 0, 0,
+			.item("rotate_with_cells", "with cells", 0, 0,
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.ALL, rotation = Patterns.Rotation.ROTATE_180, cell_transform = Patterns.CellTransform.ROTATE_180 }) \
-			.item("random", "without cells", 1, 0,
+			.item("rotate_without_cells", "without cells", 1, 0,
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.ALL, rotation = Patterns.Rotation.ROTATE_180 }) \
-			.item("random", "cells only", 2, 0,
+			.item("rotate_only_cells", "cells only", 2, 0,
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.ALL, cell_transform = Patterns.CellTransform.ROTATE_180 }) \
 			.get_popup_menu()) \
 		.item("rotate_240", "Rotate 240° without cells", 4, 0,
 			{ compatibility = Common.HalfOffsetCompatibilityFlags.OFFSETTED, rotation = Patterns.Rotation.ROTATE_240 }) \
 		.submenu("rotate_270", "Rotate 270°...", 1, null, PopupMenuBuilder.new() \
 			.connected("index_pressed", self, "__on_transform_popup_menu_item_pressed", true) \
-			.item("random", "with cells", 0, KEY_MASK_ALT | KEY_MASK_CTRL | KEY_MASK_SHIFT | KEY_R,
+			.item("rotate_with_cells", "with cells", 0, KEY_MASK_ALT | KEY_MASK_CTRL | KEY_MASK_SHIFT | KEY_R,
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.NOT_OFFSETTED, rotation = Patterns.Rotation.ROTATE_270, cell_transform = Patterns.CellTransform.ROTATE_270 }) \
-			.item("random", "without cells", 1, KEY_MASK_CTRL | KEY_MASK_SHIFT | KEY_R,
+			.item("rotate_without_cells", "without cells", 1, KEY_MASK_CTRL | KEY_MASK_SHIFT | KEY_R,
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.NOT_OFFSETTED, rotation = Patterns.Rotation.ROTATE_270 }) \
-			.item("random", "cells only", 2, KEY_MASK_ALT | KEY_MASK_SHIFT | KEY_R,
+			.item("rotate_only_cells", "cells only", 2, KEY_MASK_ALT | KEY_MASK_SHIFT | KEY_R,
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.ALL, cell_transform = Patterns.CellTransform.ROTATE_270 }) \
 			.get_popup_menu()) \
 		.item("rotate_300", "Rotate 300° without cells", 6, KEY_MASK_CTRL | KEY_MASK_SHIFT | KEY_R,
@@ -128,44 +128,44 @@ func _init(selection_paper: Selection, tiles_paper: Paper, eraser: Instrument).(
 		.connected("index_pressed", self, "__on_transform_popup_menu_item_pressed", true) \
 		.submenu("flip_0", "Flip 0°...", 0, null, PopupMenuBuilder.new() \
 			.connected("index_pressed", self, "__on_transform_popup_menu_item_pressed", true) \
-			.item("random", "with cells", 0, KEY_MASK_ALT | KEY_MASK_CTRL | KEY_F, \
+			.item("flip_with_cells", "with cells", 0, KEY_MASK_ALT | KEY_MASK_CTRL | KEY_F, \
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.ALL, flipping = Patterns.Flipping.FLIP_0, cell_transform = Patterns.CellTransform.FLIP_0 }) \
-			.item("random", "without cells", 1, KEY_MASK_CTRL | KEY_F, \
+			.item("flip_without_cells", "without cells", 1, KEY_MASK_CTRL | KEY_F, \
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.ALL, flipping = Patterns.Flipping.FLIP_0 }) \
-			.item("random", "cells only", 2, KEY_MASK_ALT | KEY_F,
+			.item("flip_only_cells", "cells only", 2, KEY_MASK_ALT | KEY_F,
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.ALL, cell_transform = Patterns.CellTransform.FLIP_0 }) \
 			.get_popup_menu()) \
 		.item("flip_30", "Flip 30° without cells", 1, 0,
 			{ compatibility = Common.HalfOffsetCompatibilityFlags.OFFSETTED, flipping = Patterns.Flipping.FLIP_30 }) \
 		.submenu("flip_45", "Flip 45°...", 0, null, PopupMenuBuilder.new() \
 			.connected("index_pressed", self, "__on_transform_popup_menu_item_pressed", true) \
-			.item("random", "with cells", 0, KEY_MASK_ALT | KEY_MASK_CTRL | KEY_T, \
+			.item("flip_with_cells", "with cells", 0, KEY_MASK_ALT | KEY_MASK_CTRL | KEY_T, \
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.NOT_OFFSETTED, flipping = Patterns.Flipping.FLIP_45, cell_transform = Patterns.CellTransform.FLIP_45 }) \
-			.item("random", "without cells", 1, KEY_MASK_CTRL | KEY_T, \
+			.item("flip_without_cells", "without cells", 1, KEY_MASK_CTRL | KEY_T, \
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.NOT_OFFSETTED, flipping = Patterns.Flipping.FLIP_45 }) \
-			.item("random", "cells only", 2, KEY_MASK_ALT | KEY_T,
+			.item("flip_only_cells", "cells only", 2, KEY_MASK_ALT | KEY_T,
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.ALL, cell_transform = Patterns.CellTransform.FLIP_45 }) \
 			.get_popup_menu()) \
 		.item("flip_60", "Flip 60° without cells", 2, 0,
 			{ compatibility = Common.HalfOffsetCompatibilityFlags.OFFSETTED, flipping = Patterns.Flipping.FLIP_60 }) \
 		.submenu("flip_90", "Flip 90°...", 3, null, PopupMenuBuilder.new() \
 			.connected("index_pressed", self, "__on_transform_popup_menu_item_pressed", true) \
-			.item("random", "with cells", 0, KEY_MASK_ALT | KEY_MASK_CTRL | KEY_MASK_SHIFT | KEY_F, \
+			.item("flip_with_cells", "with cells", 0, KEY_MASK_ALT | KEY_MASK_CTRL | KEY_MASK_SHIFT | KEY_F, \
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.ALL, flipping = Patterns.Flipping.FLIP_90, cell_transform = Patterns.CellTransform.FLIP_90 }) \
-			.item("random", "without cells", 1, KEY_MASK_CTRL | KEY_MASK_SHIFT | KEY_F, \
+			.item("flip_without_cells", "without cells", 1, KEY_MASK_CTRL | KEY_MASK_SHIFT | KEY_F, \
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.ALL, flipping = Patterns.Flipping.FLIP_90 }) \
-			.item("random", "cells only", 2, KEY_MASK_ALT | KEY_MASK_SHIFT | KEY_F, \
+			.item("flip_only_cells", "cells only", 2, KEY_MASK_ALT | KEY_MASK_SHIFT | KEY_F, \
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.ALL, cell_transform = Patterns.CellTransform.FLIP_90 }) \
 			.get_popup_menu()) \
 		.item("flip_120", "Flip 120° without cells", 4, 0,
 			{ compatibility = Common.HalfOffsetCompatibilityFlags.OFFSETTED, flipping = Patterns.Flipping.FLIP_120 }) \
 		.submenu("flip_135", "Flip 135°...", 0, null, PopupMenuBuilder.new() \
 			.connected("index_pressed", self, "__on_transform_popup_menu_item_pressed", true) \
-			.item("random", "with cells", 0, KEY_MASK_ALT | KEY_MASK_CTRL | KEY_MASK_SHIFT | KEY_T, \
+			.item("flip_with_cells", "with cells", 0, KEY_MASK_ALT | KEY_MASK_CTRL | KEY_MASK_SHIFT | KEY_T, \
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.NOT_OFFSETTED, flipping = Patterns.Flipping.FLIP_135, cell_transform = Patterns.CellTransform.FLIP_135 }) \
-			.item("random", "without cells", 1, KEY_MASK_CTRL | KEY_MASK_SHIFT | KEY_T, \
+			.item("flip_without_cells", "without cells", 1, KEY_MASK_CTRL | KEY_MASK_SHIFT | KEY_T, \
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.NOT_OFFSETTED, flipping = Patterns.Flipping.FLIP_135 }) \
-			.item("random", "cells only", 2, KEY_MASK_ALT | KEY_MASK_SHIFT | KEY_T,
+			.item("flip_only_cells", "cells only", 2, KEY_MASK_ALT | KEY_MASK_SHIFT | KEY_T,
 				{ compatibility = Common.HalfOffsetCompatibilityFlags.ALL, cell_transform = Patterns.CellTransform.FLIP_135 }) \
 			.get_popup_menu()) \
 		.item("flip_150", "Flip 150° without cells", 5, 0,
