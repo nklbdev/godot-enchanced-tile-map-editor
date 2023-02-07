@@ -208,8 +208,8 @@ func __on_content_panel_gui_input(event: InputEvent) -> void:
 					__warping = true
 					__content_panel.warp_mouse(warped_mouse_position)
 	elif event is InputEventPanGesture:
-			__content_scaler.rect_position -= event.delta * 20.0
-			__update_center_view_button()
+		__content_scaler.rect_position -= event.delta * 20.0
+		__update_center_view_button()
 	if __content_dragging_button == 0:
 		_post_process_content_panel_gui_input(event)
 
