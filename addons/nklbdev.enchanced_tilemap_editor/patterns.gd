@@ -44,15 +44,15 @@ class Pattern:
 	
 	const FLIPPING_BASES: PoolVector2Array = PoolVector2Array([
 		Vector2.RIGHT, Vector2.UP,    # 0
-		Vector2.UP,    Vector2.LEFT,  # 45
-		Vector2.LEFT,  Vector2.DOWN,  # 90
 		Vector2.DOWN,  Vector2.RIGHT, # 135
+		Vector2.LEFT,  Vector2.DOWN,  # 90
+		Vector2.UP,    Vector2.LEFT,  # 45
 	])
 
 	const ROTATION_BASES: PoolVector2Array = PoolVector2Array([
-		Vector2.UP,   Vector2.RIGHT, # 90
-		Vector2.LEFT, Vector2.UP,    # 180
 		Vector2.DOWN, Vector2.LEFT,  # 270
+		Vector2.LEFT, Vector2.UP,    # 180
+		Vector2.UP,   Vector2.RIGHT, # 90
 	])
 
 	var size: Vector2
@@ -102,9 +102,9 @@ class Pattern:
 			CellTransform.ROTATE_180: for cell in cells.keys(): cells[cell][1] = Common.rotate_cell_transform(cells[cell][1], 2)
 			CellTransform.ROTATE_270: for cell in cells.keys(): cells[cell][1] = Common.rotate_cell_transform(cells[cell][1], 3)
 			CellTransform.FLIP_0: for cell in cells.keys(): cells[cell][1] ^= Common.CELL_Y_FLIPPED
-			CellTransform.FLIP_45: for cell in cells.keys(): cells[cell][1] ^= Common.CELL_X_FLIPPED | Common.CELL_Y_FLIPPED | Common.CELL_TRANSPOSED
+			CellTransform.FLIP_45: for cell in cells.keys(): cells[cell][1] ^= Common.CELL_TRANSPOSED
 			CellTransform.FLIP_90: for cell in cells.keys(): cells[cell][1] ^= Common.CELL_X_FLIPPED
-			CellTransform.FLIP_135: for cell in cells.keys(): cells[cell][1] ^= Common.CELL_TRANSPOSED
+			CellTransform.FLIP_135: for cell in cells.keys(): cells[cell][1] ^= Common.CELL_X_FLIPPED | Common.CELL_Y_FLIPPED | Common.CELL_TRANSPOSED
 
 
 
