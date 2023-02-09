@@ -19,40 +19,37 @@ func _before_pulled(force: bool) -> void:
 func _after_pulled(force: bool) -> void:
 	__line = [Vector2.ZERO]
 
-func _on_moved(from_position: Vector2, previous_pattern_grid_position_cell: Vector2) -> void:
-	if _pattern:
-		if _is_pushed:
-			if previous_pattern_grid_position_cell != _pattern_grid_position_cell:
-				__line = Iterators.line(Vector2.ZERO, _pattern_grid_position_cell).to_array() \
-					if _pattern.size.x * _pattern.size.y > 1 else \
-					Algorithms.get_line(_pattern_grid_origin_map_cell, _pattern_grid_position_map_cell, _ruler_grid_map.cell_half_offset)
-				paint()
-		else:
-			__line[0] = Vector2.ZERO if _pattern else _pattern_grid_origin_map_cell
+func _on_moved(previous_position: Vector2, previous_pattern_grid_position_cell: Vector2) -> void:
+	if _is_pushed:
+		if _pattern_size:
+			if _pattern_size == Vector2.ONE:
+				var position_map_cell: Vector2 = _ruler_grid_map.world_to_map(_position)
+				var previous_position_map_cell: Vector2 = _ruler_grid_map.world_to_map(previous_position)
+				if position_map_cell != previous_position_map_cell:
+					__line = Algorithms.get_line(_pattern_grid_origin_map_cell, _pattern_grid_position_map_cell, _ruler_grid_map.cell_half_offset)
+					paint()
+			else:
+				if previous_pattern_grid_position_cell != _pattern_grid_position_cell:
+					__line = Iterators.line(Vector2.ZERO, _pattern_grid_position_cell).to_array()
+					paint()
 
 func _on_paint() -> void:
 	_paper.reset_changes()
-	if not _pattern:
-		return
-	if _pattern.size == Vector2.ONE:
-		var origin = _origin
-		for cell in __line:
-			_set_origin(_ruler_grid_map.map_to_world(cell))
-			paint_pattern_at(Vector2.ZERO)
-		_set_origin(origin)
-	else:
-		for cell in __line:
-			paint_pattern_at(cell)
+	if _pattern_size:
+		if _pattern_size == Vector2.ONE:
+			for cell in __line:
+				paint_pattern_at(cell - _pattern_grid_origin_map_cell)
+		else:
+			for cell in __line:
+				paint_pattern_at(cell)
 
 func _on_draw(overlay: Control) -> void:
 	if not _is_pushed:
 		return
-	if not _pattern:
-		var origin = _origin
-		for cell in __line:
-			_set_origin(_ruler_grid_map.map_to_world(cell))
-			draw_pattern_hint_at(overlay, Vector2.ZERO)
-		_set_origin(origin)
-	else:
-		for cell in __line:
-			draw_pattern_hint_at(overlay, cell)
+	if _pattern_size:
+		if _pattern_size == Vector2.ONE:
+			for cell in __line:
+				draw_pattern_hint_at(overlay, cell - _pattern_grid_origin_map_cell)
+		else:
+			for cell in __line:
+				draw_pattern_hint_at(overlay, cell)

@@ -18,14 +18,14 @@ func _after_pulled(force: bool) -> void:
 
 
 func _on_moved(from_position: Vector2, previous_pattern_grid_position_cell: Vector2) -> void:
-	if _pattern and previous_pattern_grid_position_cell != _pattern_grid_position_cell:
+	if _pattern_cells_count and previous_pattern_grid_position_cell != _pattern_grid_position_cell:
 		var size: Vector2 = _pattern_grid_position_cell
 		if size == Vector2.ZERO:
 			pass
 		elif size.x == 0:
-			size.y = floor(min(_drawing_area_limit / _pattern.cells.size(), abs(size.y))) * sign(size.y)
+			size.y = floor(min(_drawing_area_limit / _pattern_cells_count, abs(size.y))) * sign(size.y)
 		elif size.y == 0:
-			size.x = floor(min(_drawing_area_limit / _pattern.cells.size(), abs(size.x))) * sign(size.x)
+			size.x = floor(min(_drawing_area_limit / _pattern_cells_count, abs(size.x))) * sign(size.x)
 		else:
 			size = Common.limit_area(size, _drawing_area_limit).floor()
 		if size != __size:

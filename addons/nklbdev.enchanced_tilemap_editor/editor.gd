@@ -1,9 +1,7 @@
 tool
 extends EditorPlugin
 
-const Types = preload("types.gd")
 const Common = preload("common.gd")
-const Iterators = preload("iterators.gd")
 const Selection = preload("selection.gd")
 const BottomPanel = preload("bottom_panel.gd")
 const CanvasItemVisibilityController = preload("canvas_item_visibility_controller.gd")
@@ -49,11 +47,6 @@ func __set_instrument(value: Instrument) -> void:
 ##########################################
 #           OVERRIDEN METHODS            #
 ##########################################
-
-static func __tangent(points: PoolVector2Array) -> PoolVector2Array:
-	for i in points.size():
-		points[i] = points[i].tangent()
-	return points
 
 func _init():
 	name = "EnchancedTileMapEditorPlugin"
@@ -282,17 +275,6 @@ func __on_instrument_changed() -> void:
 func __on_select_tool_button_toggled(pressed: bool) -> void:
 	update_overlays()
 
-const CELL_LINES: PoolVector2Array = PoolVector2Array([
-	Vector2(0, 0   ), Vector2(1, 0   ),
-	Vector2(0,    0), Vector2(0,    1),
-])
-
-const CELL_SUBLINES: PoolVector2Array = PoolVector2Array([
-	Vector2( 0,   -0.25), Vector2( 1,   -0.25),
-	Vector2( 0,    0.25), Vector2( 1,    0.25),
-	Vector2(-0.25, 0   ), Vector2(-0.25, 1   ),
-	Vector2( 0.25, 0   ), Vector2( 0.25, 1   ),
-])
 const Algorithms = preload("algorithms.gd")
 var __temp_grid_color: Color
 func __draw_grid(overlay: Control):
@@ -301,21 +283,6 @@ func __draw_grid(overlay: Control):
 
 	var cell_half_offset_type = __tile_map.cell_half_offset
 	var cell_position: Vector2
-#	var instrument = __active_instrument if __active_instrument else __instrument
-#	var draw_transform: Transform2D = __visual_root.transform
-#	if (__is_mouse_on_overlay and instrument) or __active_instrument:
-#		__temp_grid_color = __settings.grid_color
-#		var mouse_map_cell: Vector2 = __tile_map.world_to_map(__tile_map.get_local_mouse_position())
-#		for y in range(mouse_map_cell.y - __settings.grid_fragment_radius, mouse_map_cell.y + __settings.grid_fragment_radius + 1):
-#			for x in range(mouse_map_cell.x - __settings.grid_fragment_radius, mouse_map_cell.x + __settings.grid_fragment_radius + 1):
-#				cell_position = Vector2(x, y)
-#				cell_position += Common.get_cell_half_offset(cell_position, cell_half_offset_type)
-#				overlay.draw_set_transform_matrix(draw_transform.translated(cell_position))
-#				__temp_grid_color.a = __settings.grid_color.a * (1 - mouse_map_cell.distance_squared_to(cell_position) / __settings.grid_fragment_radius_squared)
-#				overlay.draw_multiline(CELL_LINES, __temp_grid_color)
-#				__temp_grid_color.a /= 3
-#				overlay.draw_multiline(CELL_SUBLINES, __temp_grid_color)
-#		overlay.draw_set_transform_matrix(draw_transform)
 
 	# Draw axis fragment
 	var axis_color: Color = __settings.axis_color

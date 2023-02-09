@@ -3,7 +3,7 @@
 [![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
 [![ru](https://img.shields.io/badge/lang-ru-green.svg)](README.ru.md)
 
-Hello everyone Godot users! I'm developing an alternative tile editor for the Godot engine v3.5+.
+Hello everyone Godot users! I'm developing an alternative tile map editor for the Godot engine v3.5+.
 
 It is a very early alpha version. I will be glad to your wishes and suggestions for its improvement!
 

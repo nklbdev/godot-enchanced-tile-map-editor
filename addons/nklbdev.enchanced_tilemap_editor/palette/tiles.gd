@@ -28,6 +28,8 @@ var __flipping_menu_button: MenuButton
 
 var __ruler_grid_map: TileMap
 
+var __single_painting_instruments: Array
+
 func _init(selection_paper: Selection, tiles_paper: Paper, eraser: Instrument).("Tiles", "tiles", [
 	TilesByTextureSubpalette.new(),
 	TilesIndividualSubpalette.new(),
@@ -42,15 +44,17 @@ func _init(selection_paper: Selection, tiles_paper: Paper, eraser: Instrument).(
 	selection_paper.connect("pattern_copied", self, "__on_selection_pattern_copied")
 	var selection_pattern_holder: Common.ValueHolder = Common.ValueHolder.new(Patterns.Pattern.new(Vector2.ONE, [0, 0, 0, 0]))
 
+	var instrument_brush: InstrumentStamp = InstrumentStamp.new(_pattern_holder, tiles_paper, selection_map)
 	var instrument_line: InstrumentLine = InstrumentLine.new(_pattern_holder, tiles_paper, selection_map)
 	var instrument_rectangle: InstrumentRectangle = InstrumentRectangle.new(_pattern_holder, tiles_paper, selection_map)
 	var instrument_bucket_fill: InstrumentFlood = InstrumentFlood.new(_pattern_holder, tiles_paper, tiles_paper, selection_map)
-	var combined_brush_instrument: InstrumentCombined = InstrumentCombined.new(InstrumentStamp.new(_pattern_holder, tiles_paper, selection_map))
+	var combined_brush_instrument: InstrumentCombined = InstrumentCombined.new(instrument_brush)
 	combined_brush_instrument.set_instrument(KEY_SHIFT, instrument_line)
 	combined_brush_instrument.set_instrument(KEY_CONTROL | KEY_SHIFT, instrument_rectangle)
 	combined_brush_instrument.set_instrument(KEY_ALT | KEY_SHIFT, instrument_bucket_fill)
-	
 	__brush_instrument_tool_button = toolbar.create_instrument_button("Brush\nShift+LMB: Line\nShift+Ctrl+LMB: Rectangle", KEY_B, "brush", combined_brush_instrument)
+	__single_painting_instruments = [instrument_brush, instrument_line, instrument_rectangle, instrument_bucket_fill]
+	
 	_pattern_holder.connect("value_changed", self, "__on_pattern_holder_value_changed")
 
 	var tb = TB.tree(self)
@@ -273,3 +277,5 @@ func __on_selection_pattern_copied(pattern: Patterns.Pattern) -> void:
 
 func __on_place_random_tile_button_toggled(button_pressed: bool) -> void:
 	__scattering_controls.visible = button_pressed
+	for instrument in __single_painting_instruments:
+		instrument.random_tile_mode = button_pressed

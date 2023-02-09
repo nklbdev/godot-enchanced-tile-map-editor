@@ -54,9 +54,11 @@ class Pattern:
 		Vector2.LEFT, Vector2.UP,    # 180
 		Vector2.UP,   Vector2.RIGHT, # 90
 	])
-
+	
+	
 	var size: Vector2
 	var cells: Dictionary
+	signal changed
 
 	const __temp_map_cell_data: PoolIntArray = PoolIntArray([0, 0, 0, 0])
 	func _init(size: Vector2 = Vector2.ZERO, data: PoolIntArray = []) -> void:
@@ -105,6 +107,7 @@ class Pattern:
 			CellTransform.FLIP_45: for cell in cells.keys(): cells[cell][1] ^= Common.CELL_TRANSPOSED
 			CellTransform.FLIP_90: for cell in cells.keys(): cells[cell][1] ^= Common.CELL_X_FLIPPED
 			CellTransform.FLIP_135: for cell in cells.keys(): cells[cell][1] ^= Common.CELL_X_FLIPPED | Common.CELL_Y_FLIPPED | Common.CELL_TRANSPOSED
+		emit_signal("changed")
 
 
 
@@ -134,6 +137,7 @@ class Pattern:
 		size = end - position + Vector2.ONE
 		for cell in new_cells.keys():
 			cells[cell - position] = new_cells[cell]
+		emit_signal("changed")
 
 
 	func __rotate_ccw_hex(steps: int, cell_half_offset: int) -> void:
@@ -178,8 +182,7 @@ class Pattern:
 			size.x = max(size.x, new_cell.x)
 			size.y = max(size.y, new_cell.y)
 		size += Vector2.ONE
-
-
+		emit_signal("changed")
 
 
 const Common = preload("common.gd")
