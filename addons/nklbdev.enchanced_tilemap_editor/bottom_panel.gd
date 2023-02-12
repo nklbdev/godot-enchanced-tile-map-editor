@@ -10,6 +10,7 @@ const Selection = preload("selection.gd")
 const Patterns = preload("patterns.gd")
 const TilesPalette = preload("palette/tiles.gd")
 const AutotilesPalette = preload("palette/autotiles.gd")
+const PatternLayoutMap = preload("pattern_layout_map.gd")
 
 
 var __palettes_option_button: OptionButton
@@ -35,8 +36,10 @@ func __set_instrument(instrument: Instrument) -> void:
 func _init(selection_paper: Selection, tiles_paper: Paper, autotiles_paper: Paper, terrains_paper: Paper) -> void:
 	rect_min_size.y = 200
 	__palettes_option_button = OptionButton.new()
-	var __eraser_pattern_holder: Common.ValueHolder = Common.ValueHolder.new(Patterns.Pattern.new(Vector2.ONE, [-2, 0, 0, 0]))
-	var eraser = InstrumentStamp.new(__eraser_pattern_holder, tiles_paper, selection_paper.get_selection_map(), true, true)
+	var eraser_pattern_layout_map: PatternLayoutMap = PatternLayoutMap.new(tiles_paper)
+	eraser_pattern_layout_map.pattern = Patterns.Pattern.new(Vector2.ONE, [-2, 0, 0, 0])
+
+	var eraser = InstrumentStamp.new(tiles_paper, eraser_pattern_layout_map, selection_paper.get_selection_map(), true, true)
 	__alternate_instrument = eraser
 	__add_palette(TilesPalette.new(selection_paper, tiles_paper, eraser))
 	__add_palette(AutotilesPalette.new(selection_paper, autotiles_paper, terrains_paper))

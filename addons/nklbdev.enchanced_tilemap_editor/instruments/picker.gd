@@ -1,7 +1,7 @@
 extends "_single.gd"
 
-func _init(pattern_holder: Common.ValueHolder, paper: Paper, selection_map: TileMap = null, paint_immediately_on_pushed: bool = true, paint_invalid_cell: bool = false) \
-	.(pattern_holder, paper, selection_map, paint_immediately_on_pushed, paint_invalid_cell) -> void:
+func _init(paper: Paper, pattern_layout_map: PatternLayoutMap, selection_map: TileMap = null, paint_immediately_on_pushed: bool = true, paint_invalid_cell: bool = false) \
+	.(paper, pattern_layout_map, selection_map, paint_immediately_on_pushed, paint_invalid_cell) -> void:
 	pass
 
 

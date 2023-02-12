@@ -7,6 +7,7 @@ const AutotilesTerrainsSubpalette = preload("subpalette_autotiles_terrains.gd")
 
 const Paper = preload("../paper.gd")
 const Selection = preload("../selection.gd")
+const PatternLayoutMap = preload("../pattern_layout_map.gd")
 # Instruments
 const InstrumentCombined  = preload("../instruments/combined.gd")
 const InstrumentStamp     = preload("../instruments/stamp.gd")
@@ -18,13 +19,13 @@ var __brush_instrument_tool_button: ToolButton
 
 func _init(selection_paper: Selection, autotiles_paper: Paper, terrains_paper: Paper).("Autotiles", "autotiles", [AutotilesClassicSubpalette.new(autotiles_paper), AutotilesTerrainsSubpalette.new(terrains_paper)]) -> void:
 	var tb = TB.tree(self)
-	var pattern_holder = Common.ValueHolder.new()
 	var paper = Paper.new()
+	var paint_pattern_layout_map: PatternLayoutMap = PatternLayoutMap.new(autotiles_paper)
 	var selection_map: TileMap = selection_paper.get_selection_map()
 	
-	var instrument_line: InstrumentLine = InstrumentLine.new(_pattern_holder, paper, selection_map)
-	var instrument_rectangle: InstrumentRectangle = InstrumentRectangle.new(_pattern_holder, paper, selection_map)
-	var combined_brush_instrument: InstrumentCombined = InstrumentCombined.new(InstrumentStamp.new(_pattern_holder, paper, selection_map))
+	var instrument_line: InstrumentLine = InstrumentLine.new(paper, paint_pattern_layout_map, selection_map)
+	var instrument_rectangle: InstrumentRectangle = InstrumentRectangle.new(paper, paint_pattern_layout_map, selection_map)
+	var combined_brush_instrument: InstrumentCombined = InstrumentCombined.new(InstrumentStamp.new(paper, paint_pattern_layout_map, selection_map))
 	combined_brush_instrument.set_instrument(KEY_SHIFT, instrument_line)
 	combined_brush_instrument.set_instrument(KEY_CONTROL | KEY_SHIFT, instrument_rectangle)
 	
@@ -34,7 +35,7 @@ func _init(selection_paper: Selection, autotiles_paper: Paper, terrains_paper: P
 		tb.node(__brush_instrument_tool_button),
 		tb.node(toolbar.create_instrument_button("Line", KEY_L, "line", instrument_line)),
 		tb.node(toolbar.create_instrument_button("Rectangle", KEY_R, "rectangle", instrument_rectangle)),
-		tb.node(toolbar.create_instrument_button("Picker", KEY_I, "picker", InstrumentPicker.new(pattern_holder, paper, selection_map))),
+		tb.node(toolbar.create_instrument_button("Picker", KEY_I, "picker", InstrumentPicker.new(paper, paint_pattern_layout_map, selection_map))),
 	]).build()
 
 func _ready() -> void:

@@ -227,8 +227,6 @@ func _on_tile_region_selected(region: Rect2, tile: Tile, offsetted: bool = false
 	if _previous_selected_tile and _previous_selected_tile != tile:
 		_previous_selected_tile.unselect()
 	_previous_selected_tile = tile
-	# TODO сделать чо надо
-#	prints("off", _tile_map.cell_half_offset, _tile_map.cell_half_offset % 3)
 	region = region.abs()
 	var data: PoolIntArray = PoolIntArray()
 	data.resize(region.size.x * region.size.y * 4)

@@ -62,37 +62,38 @@ func process_input_event_key(event: InputEventKey) -> bool:
 	if _is_input_freezed:
 		return false
 	if (event.control or event.command) and not event.alt:
-		if event.scancode == KEY_C or event.scancode == KEY_X:
-			var cut: bool = event.scancode == KEY_X
-			var used_rect: Rect2 = __selection_map.get_used_rect()
-			if used_rect.has_no_area():
-				return false
+		pass
+	# 	if event.scancode == KEY_C or event.scancode == KEY_X:
+	# 		var cut: bool = event.scancode == KEY_X
+	# 		var used_rect: Rect2 = __selection_map.get_used_rect()
+	# 		if used_rect.has_no_area():
+	# 			return false
 
-			var data: PoolIntArray
-			var pattern: Patterns.Pattern = Patterns.Pattern.new()
-			var pattern_position: Vector2 = __ruler_grid_map.map_to_world(used_rect.position)
-			var pattern_cells: Dictionary
-			var origin: Vector2 = Vector2.INF
-			var end: Vector2 = -Vector2.INF
-			for cell in __selection_map.get_used_cells():
-				var cell_position = __ruler_grid_map.map_to_world(cell)
-				var pattern_cell = __ruler_grid_map.world_to_map(cell_position - pattern_position)
-				origin.x = min(origin.x, pattern_cell.x)
-				origin.y = min(origin.y, pattern_cell.y)
-				end.x = max(end.x, pattern_cell.x)
-				end.y = max(end.y, pattern_cell.y)
-				pattern_cells[pattern_cell] = Common.get_map_cell_data(__tile_map_to_select, cell)
-			pattern.size = end - origin + Vector2.ONE
-			for cell in pattern_cells.keys():
-				pattern.cells[cell - origin] = pattern_cells[cell]
-			var serialized_pattern: String = Patterns.serialize(pattern)
-			OS.clipboard = serialized_pattern
-			pattern = Patterns.deserialize(serialized_pattern)
+	# 		var data: PoolIntArray
+	# 		var pattern: Patterns.Pattern = Patterns.Pattern.new()
+	# 		var pattern_position: Vector2 = __pattern_layout_map.map_to_world(used_rect.position)
+	# 		var pattern_cells: Dictionary
+	# 		var origin: Vector2 = Vector2.INF
+	# 		var end: Vector2 = -Vector2.INF
+	# 		for cell in __selection_map.get_used_cells():
+	# 			var cell_position = __pattern_layout_map.map_to_world(cell)
+	# 			var pattern_cell = __pattern_layout_map.world_to_map(cell_position - pattern_position)
+	# 			origin.x = min(origin.x, pattern_cell.x)
+	# 			origin.y = min(origin.y, pattern_cell.y)
+	# 			end.x = max(end.x, pattern_cell.x)
+	# 			end.y = max(end.y, pattern_cell.y)
+	# 			pattern_cells[pattern_cell] = Common.get_map_cell_data(__tile_map_to_select, cell)
+	# 		pattern.size = end - origin + Vector2.ONE
+	# 		for cell in pattern_cells.keys():
+	# 			pattern.cells[cell - origin] = pattern_cells[cell]
+	# 		var serialized_pattern: String = Patterns.serialize(pattern)
+	# 		OS.clipboard = serialized_pattern
+	# 		pattern = Patterns.deserialize(serialized_pattern)
 			
-			emit_signal("pattern_copied", pattern)
-			return true
-		elif event.scancode == KEY_V:
-			pass
+	# 		emit_signal("pattern_copied", pattern)
+	# 		return true
+	# 	elif event.scancode == KEY_V:
+	# 		pass
 	elif event.scancode == KEY_DELETE and not(event.control or event.alt or event.shift or event.meta):
 		var used_rect: Rect2 = __selection_map.get_used_rect()
 		if used_rect.has_no_area():

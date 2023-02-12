@@ -11,12 +11,10 @@ var toolbar: ToolBar
 
 var __subpalettes_option_button: OptionButton
 var __current_subpalette: Subpalette
-var _pattern_holder: Common.ValueHolder
 var _alternate_instrument: Instrument
 
 func _init(title: String, icon_name: String, subpalettes: Array) -> void:
 	self.title = title
-	_pattern_holder = Common.ValueHolder.new()
 	icon = Common.get_icon(icon_name)
 	toolbar = ToolBar.new()
 	__subpalettes_option_button = OptionButton.new()
@@ -41,10 +39,10 @@ func process_input_event_key(event: InputEventKey) -> bool:
 func __add_subpalette(subpalette: Control) -> void:
 	__subpalettes_option_button.add_icon_item(subpalette.icon, subpalette.title)
 	__subpalettes_option_button.set_item_metadata(__subpalettes_option_button.get_item_count() - 1, subpalette)
-	subpalette.connect("selected", self, "__on_subpalette_selected")
+	subpalette.connect("selected", self, "_on_subpalette_selected")
 
-func __on_subpalette_selected(data) -> void:
-	_pattern_holder.value = data
+func _on_subpalette_selected(data) -> void:
+	return
 
 func __on_subpalettes_option_button_item_selected(index: int) -> void:
 	var subpalette: Subpalette = __subpalettes_option_button.get_item_metadata(index) as Subpalette

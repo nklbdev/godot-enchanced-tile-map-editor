@@ -2,8 +2,8 @@ extends "_single.gd"
 
 var __size: Vector2
 
-func _init(pattern_holder: Common.ValueHolder, paper: Paper, selection_map: TileMap = null, paint_immediately_on_pushed: bool = true, paint_invalid_cell: bool = false) \
-	.(pattern_holder, paper, selection_map, paint_immediately_on_pushed, paint_invalid_cell) -> void:
+func _init(paper: Paper, pattern_layout_map: PatternLayoutMap, selection_map: TileMap = null, paint_immediately_on_pushed: bool = true, paint_invalid_cell: bool = false) \
+	.(paper, pattern_layout_map, selection_map, paint_immediately_on_pushed, paint_invalid_cell) -> void:
 	pass
 
 func _before_pushed() -> void:
@@ -18,14 +18,14 @@ func _after_pulled(force: bool) -> void:
 
 
 func _on_moved(from_position: Vector2, previous_pattern_grid_position_cell: Vector2) -> void:
-	if _pattern_cells_count and previous_pattern_grid_position_cell != _pattern_grid_position_cell:
+	if _pattern_layout_map.used_cells_count and previous_pattern_grid_position_cell != _pattern_grid_position_cell:
 		var size: Vector2 = _pattern_grid_position_cell
 		if size == Vector2.ZERO:
 			pass
 		elif size.x == 0:
-			size.y = floor(min(_drawing_area_limit / _pattern_cells_count, abs(size.y))) * sign(size.y)
+			size.y = floor(min(_drawing_area_limit / _pattern_layout_map.used_cells_count, abs(size.y))) * sign(size.y)
 		elif size.y == 0:
-			size.x = floor(min(_drawing_area_limit / _pattern_cells_count, abs(size.x))) * sign(size.x)
+			size.x = floor(min(_drawing_area_limit / _pattern_layout_map.used_cells_count, abs(size.x))) * sign(size.x)
 		else:
 			size = Common.limit_area(size, _drawing_area_limit).floor()
 		if size != __size:

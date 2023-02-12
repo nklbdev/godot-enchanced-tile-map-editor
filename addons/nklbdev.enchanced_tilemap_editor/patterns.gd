@@ -77,15 +77,6 @@ class Pattern:
 	func create_icon(tile_map: TileMap, icon_size: Vector2) -> Texture:
 		return null
 
-	func get_origin_map_cell(world_position: Vector2, ruler_grid_map: TileMap) -> Vector2:
-		if size == Vector2.ONE:
-			return ruler_grid_map.world_to_map(world_position)
-		var linear_size: Vector2 = ruler_grid_map.cell_half_offset_type.conv(size)
-		return ruler_grid_map.world_to_map(
-			world_position + ruler_grid_map.cell_half_offset_type.conv(
-				(Vector2.ONE - linear_size + Vector2.RIGHT *
-				((int(linear_size.y > 1) + (int(linear_size.y) & 1)) * ruler_grid_map.cell_half_offset_type.offset)) / 2))
-
 	func rotate_ccw(steps: int, cell_half_offset: int) -> void:
 		if cell_half_offset == TileMap.HALF_OFFSET_DISABLED:
 			__rotate_ccw_rect(__ROTATIONS_RECT[steps])
