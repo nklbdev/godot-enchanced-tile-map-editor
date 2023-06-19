@@ -1,6 +1,7 @@
 extends Control
 
 const Common = preload("../common.gd")
+const WeakRefStorage = preload("../weakref_storage.gd")
 const TreeBuilder = preload("../tree_builder.gd")
 const Instrument = preload("../instruments/_base.gd")
 
@@ -19,12 +20,28 @@ func _init(title: String, icon_name: String) -> void:
 	anchor_bottom = 1
 	_item_list.connect("item_selected", self, "__on_item_list_item_selected")
 
+var __last_states: WeakRefStorage = WeakRefStorage.new()
+var _state: Dictionary
 func set_up(tile_map: TileMap) -> void:
 	_tile_map = tile_map
+	_state.clear()
+	if _tile_map.tile_set != null:
+		var state = __last_states.pop(_tile_map.tile_set)
+		if state != null:
+			_state.merge(state)
 	_after_set_up()
+	if not _state.empty() and _state.item_idx >= 0 and _item_list.get_item_count() > 0:
+		var idx = min(_state.item_idx, _item_list.get_item_count() - 1)
+		_item_list.select(idx)
+		_item_list.emit_signal("item_selected", idx)
 
 func tear_down() -> void:
+	var selected_items: PoolIntArray = _item_list.get_selected_items()
+	_state["item_idx"] = -1 if selected_items.empty() else selected_items[0]
 	_before_tear_down()
+	if _tile_map.tile_set:
+		__last_states.push(_tile_map.tile_set, _state.duplicate())
+	_state.clear()
 	_item_list.clear()
 	_tile_map = null
 

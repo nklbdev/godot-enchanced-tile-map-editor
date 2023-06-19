@@ -139,3 +139,7 @@ func _after_set_up() -> void:
 					tile_texture.resource_path.get_file() if tile_texture.resource_path else "",
 					tile_texture,
 					TilesTextureRect.new(tile_texture, tile_set, self))
+	._after_set_up()
+
+func _before_tear_down() -> void:
+	._before_tear_down()

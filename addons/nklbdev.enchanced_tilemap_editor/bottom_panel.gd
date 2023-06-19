@@ -1,6 +1,7 @@
 extends VBoxContainer
 
 const Common = preload("common.gd")
+const WeakRefStorage = preload("weakref_storage.gd")
 const Instrument = preload("instruments/_base.gd")
 const InstrumentStamp = preload("instruments/stamp.gd")
 const InstrumentLine = preload("instruments/line.gd")
@@ -74,13 +75,28 @@ func _init(selection_paper: Selection, tiles_paper: Paper, autotiles_paper: Pape
 	if __palettes_option_button.get_item_count() > 0:
 		__on_palettes_option_button_item_selected(0)
 
+var __last_states: WeakRefStorage = WeakRefStorage.new()
+var __tile_map: TileMap
 func set_up(tile_map: TileMap) -> void:
+	__tile_map = tile_map
+	if __tile_map.tile_set:
+		var last_selected_palette_id = __last_states.pop(__tile_map.tile_set)
+		if last_selected_palette_id != null:
+			last_selected_palette_id = last_selected_palette_id as int
+			var idx = __palettes_option_button.get_item_index(last_selected_palette_id)
+			if __palettes_option_button.selected != idx:
+				__palettes_option_button.select(idx)
+				__palettes_option_button.emit_signal("item_selected", idx)
 	for palette_index in __palettes_option_button.get_item_count():
 		__palettes_option_button.get_item_metadata(palette_index).set_up(tile_map)
 
 func tear_down() -> void:
-	for palette_index in __palettes_option_button.get_item_count():
-		__palettes_option_button.get_item_metadata(palette_index).tear_down()
+	var last_selected_palette_id: int = __palettes_option_button.get_selected_id()
+	if __tile_map.tile_set:
+		__last_states.push(__tile_map.tile_set, last_selected_palette_id)
+		__tile_map = null
+		for palette_index in __palettes_option_button.get_item_count():
+			__palettes_option_button.get_item_metadata(palette_index).tear_down()
 
 func process_input_event_key(event: InputEventKey) -> bool:
 	return __current_palette.process_input_event_key(event)

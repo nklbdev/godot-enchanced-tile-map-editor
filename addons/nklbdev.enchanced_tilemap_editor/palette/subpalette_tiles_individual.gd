@@ -151,4 +151,7 @@ func _after_set_up() -> void:
 				"%s: %s" % [tile_id, tile_set.tile_get_name(tile_id)],
 				tile_icon,
 				TileOnTileMap.new(tile_id, _tile_map, self))
+	._after_set_up()
 
+func _before_tear_down() -> void:
+	._before_tear_down()

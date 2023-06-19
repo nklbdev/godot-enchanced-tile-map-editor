@@ -96,8 +96,47 @@ func _init(title: String, icon_name: String).(title, icon_name) -> void:
 		]).build()
 	__center_view_button.set_anchors_and_margins_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE)
 
+const _content_holder_position_key: String = "content_holder_position"
+const _content_scaler_position_key: String = "content_scaler_position"
+const _content_scaler_scale_key: String = "content_scaler_scale"
+const _content_zoom_key: String = "content_scaler_scale"
+
+func _after_set_up() -> void:
+	if not _state.empty():
+		var contents_states: Array = _state["contents_states"]
+		if _item_list.get_item_count() == contents_states.size():
+			var item_index: int = 0
+			for content_state in contents_states:
+				var content = _item_list.get_item_metadata(item_index)
+				if content_state.has(_content_holder_position_key):
+					content.set_meta(_content_holder_position_key, content_state[_content_holder_position_key])
+				if content_state.has(_content_scaler_position_key):
+					content.set_meta(_content_scaler_position_key, content_state[_content_scaler_position_key])
+				if content_state.has(_content_scaler_scale_key):
+					content.set_meta(_content_scaler_scale_key, content_state[_content_scaler_scale_key])
+				if content_state.has(_content_zoom_key):
+					content.set_meta(_content_zoom_key, content_state[_content_zoom_key])
+				item_index += 1
+	._after_set_up()
 
 func _before_tear_down() -> void:
+	._before_tear_down()
+	if _content:
+		__save_content_state_to_metadata()
+	var contents_states: Array = []
+	for item_index in _item_list.get_item_count():
+		var content = _item_list.get_item_metadata(item_index)
+		var content_state: Dictionary = {}
+		if content.has_meta(_content_holder_position_key):
+			content_state[_content_holder_position_key] = content.get_meta(_content_holder_position_key)
+		if content.has_meta(_content_scaler_position_key):
+			content_state[_content_scaler_position_key] = content.get_meta(_content_scaler_position_key)
+		if content.has_meta(_content_scaler_scale_key):
+			content_state[_content_scaler_scale_key] = content.get_meta(_content_scaler_scale_key)
+		if content.has_meta(_content_zoom_key):
+			content_state[_content_zoom_key] = content.get_meta(_content_zoom_key)
+		contents_states.append(content_state)
+	_state["contents_states"] = contents_states
 	unselect()
 	__clear_content_viewport()
 
@@ -107,14 +146,14 @@ func _on_item_list_item_selected(index: int, metadata) -> void:
 	__content_holder.add_child(_content)
 	__center_view()
 	__set_content_zoom(EDSCALE)
-	if _content.has_meta("content_holder_position"):
-		__content_holder.rect_position = _content.get_meta("content_holder_position")
-	if _content.has_meta("content_scaler_position"):
-		__content_scaler.rect_position = _content.get_meta("content_scaler_position")
-	if _content.has_meta("content_scaler_scale"):
-		__content_scaler.rect_scale = _content.get_meta("content_scaler_scale")
-	if _content.has_meta("content_zoom"):
-		__content_zoom = _content.get_meta("content_zoom")
+	if _content.has_meta(_content_holder_position_key):
+		__content_holder.rect_position = _content.get_meta(_content_holder_position_key)
+	if _content.has_meta(_content_scaler_position_key):
+		__content_scaler.rect_position = _content.get_meta(_content_scaler_position_key)
+	if _content.has_meta(_content_scaler_scale_key):
+		__content_scaler.rect_scale = Vector2.ONE * _content.get_meta(_content_scaler_scale_key)
+	if _content.has_meta(_content_zoom_key):
+		__content_zoom = _content.get_meta(_content_zoom_key)
 	__update_zoom_label()
 	__update_center_view_button()
 
@@ -124,12 +163,15 @@ func _on_unselect() -> void:
 		_previous_selected_tile = null
 	_selected_pattern = null
 
+func __save_content_state_to_metadata() -> void:
+	_content.set_meta(_content_holder_position_key, __content_holder.rect_position)
+	_content.set_meta(_content_scaler_position_key, __content_scaler.rect_position)
+	_content.set_meta(_content_scaler_scale_key, __content_scaler.rect_scale.x)
+	_content.set_meta(_content_zoom_key, __content_zoom)
+
 func __clear_content_viewport() -> void:
 	if _content:
-		_content.set_meta("content_holder_position", __content_holder.rect_position)
-		_content.set_meta("content_scaler_position", __content_scaler.rect_position)
-		_content.set_meta("content_scaler_scale", __content_scaler.rect_scale)
-		_content.set_meta("content_zoom", __content_zoom)
+		__save_content_state_to_metadata()
 		__content_holder.remove_child(_content)
 		_content = null
 	__center_view()

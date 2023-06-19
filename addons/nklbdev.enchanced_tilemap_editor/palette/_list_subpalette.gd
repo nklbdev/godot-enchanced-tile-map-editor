@@ -18,3 +18,9 @@ func _init(title: String, icon_name: String).(title, icon_name) -> void:
 
 func _on_item_list_item_selected(index: int, metadata) -> void:
 	emit_signal("selected", metadata)
+
+func _after_set_up() -> void:
+	._after_set_up()
+
+func _before_tear_down() -> void:
+	._before_tear_down()

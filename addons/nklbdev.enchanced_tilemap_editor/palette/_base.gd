@@ -1,6 +1,7 @@
 extends Control
 
 const Common = preload("../common.gd")
+const WeakRefStorage = preload("../weakref_storage.gd")
 const Subpalette = preload("_subpalette.gd")
 const ToolBar = preload("tool_bar.gd")
 const Instrument = preload("../instruments/_base.gd")
@@ -25,11 +26,28 @@ func _init(title: String, icon_name: String, subpalettes: Array) -> void:
 	if __subpalettes_option_button.get_item_count() > 0:
 		__on_subpalettes_option_button_item_selected(0)
 
+
+var __tile_map: TileMap
+var __last_states: WeakRefStorage = WeakRefStorage.new()
 func set_up(tile_map: TileMap) -> void:
+	__tile_map = tile_map
+	if __tile_map.tile_set:
+		var last_selected_subpalette_id = __last_states.pop(__tile_map.tile_set)
+		if last_selected_subpalette_id != null:
+			last_selected_subpalette_id = last_selected_subpalette_id as int
+			var idx = __subpalettes_option_button.get_item_index(last_selected_subpalette_id)
+			if __subpalettes_option_button.selected != idx:
+				__subpalettes_option_button.select(idx)
+				__subpalettes_option_button.emit_signal("item_selected", idx)
 	for subpalette_index in __subpalettes_option_button.get_item_count():
 		__subpalettes_option_button.get_item_metadata(subpalette_index).set_up(tile_map)
 
 func tear_down() -> void:
+	var last_selected_subpalette_id = __subpalettes_option_button.get_selected_id()
+	if __tile_map.tile_set:
+		__last_states.push(__tile_map.tile_set, last_selected_subpalette_id)
+		__tile_map = null
+	
 	for subpalette_index in __subpalettes_option_button.get_item_count():
 		__subpalettes_option_button.get_item_metadata(subpalette_index).tear_down()
 
