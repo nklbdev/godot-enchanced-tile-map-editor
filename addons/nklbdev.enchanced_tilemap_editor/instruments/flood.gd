@@ -22,7 +22,7 @@ func _after_pushed() -> void:
 		return
 
 	# TODO: remove offset type dependency!
-	var offset_type: Common.CellHalfOffsetType = _pattern_layout_map.cell_half_offset_type
+	var offset_type: Common.CellHalfOffsetType = Common.CELL_HALF_OFFSET_TYPES[_pattern_layout_map.cell_half_offset]
 	var cell_queue: Array
 	cell_queue.append(__start_filling_cell)
 	

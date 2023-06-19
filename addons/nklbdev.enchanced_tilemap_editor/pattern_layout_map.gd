@@ -9,7 +9,6 @@ signal layout_changed()
 var __paper: Paper
 var __previous_cell_half_offset: int
 
-var cell_half_offset_type: Common.CellHalfOffsetType
 var pattern: Patterns.Pattern setget __set_pattern
 var used_cells_count: int
 var used_cells: Array
@@ -91,20 +90,6 @@ func __lay_out_pattern() -> void:
 	cell_offset = map_to_world(Vector2.ONE) - Vector2.ONE
 	origin_position_offset = cell_offset * (1 if int(linear_size.y) & 1 else 0.5)
 	emit_signal("layout_changed")
-
-# func get_origin_map_cell_old(world_position: Vector2) -> Vector2:
-	# # TODO: Review this method to remove "cell_half_offset_type"
-	# if pattern_size == Vector2.ONE:
-	# 	return world_to_map(world_position)
-	# var linear_size: Vector2 = Vector2(
-	# 	pattern_size[cell_offset_axis_index],
-	# 	pattern_size[cell_offset_axis_index ^ 1])
-	# var a: Vector2 = (int(linear_size.y > 1) + (int(lines_count_in_pattern) & 1)) * cell_offset
-
-	# return world_to_map(world_position +
-	# 	cell_half_offset_type.conv((Vector2.ONE - linear_size + Vector2.RIGHT * a) / 2))
-	# pass
-
 
 func get_origin_map_cell(world_position: Vector2) -> Vector2:
 	return world_to_map(world_position -

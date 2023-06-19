@@ -3,6 +3,11 @@ extends VBoxContainer
 const Common = preload("common.gd")
 const Instrument = preload("instruments/_base.gd")
 const InstrumentStamp = preload("instruments/stamp.gd")
+const InstrumentLine = preload("instruments/line.gd")
+const InstrumentRectangle = preload("instruments/rectangle.gd")
+const InstrumentFlood = preload("instruments/flood.gd")
+const InstrumentCombined = preload("instruments/combined.gd")
+
 const ToolBar = preload("palette/tool_bar.gd")
 const Palette = preload("palette/_base.gd")
 const Paper = preload("paper.gd")
@@ -39,9 +44,20 @@ func _init(selection_paper: Selection, tiles_paper: Paper, autotiles_paper: Pape
 	var eraser_pattern_layout_map: PatternLayoutMap = PatternLayoutMap.new(tiles_paper)
 	eraser_pattern_layout_map.pattern = Patterns.Pattern.new(Vector2.ONE, [-2, 0, 0, 0])
 
-	var eraser = InstrumentStamp.new(tiles_paper, eraser_pattern_layout_map, selection_paper.get_selection_map(), true, true)
-	__alternate_instrument = eraser
-	__add_palette(TilesPalette.new(selection_paper, tiles_paper, eraser))
+	var selection_map: TileMap = selection_paper.get_selection_map()
+		
+	var eraser_brush: InstrumentStamp = InstrumentStamp.new(tiles_paper, eraser_pattern_layout_map, selection_map, true, true)
+	var eraser_line: InstrumentLine = InstrumentLine.new(tiles_paper, eraser_pattern_layout_map, selection_map, true, true)
+	var eraser_rectangle: InstrumentRectangle = InstrumentRectangle.new(tiles_paper, eraser_pattern_layout_map, selection_map, true, true)
+	var eraser_bucket_fill: InstrumentFlood = InstrumentFlood.new(tiles_paper, eraser_pattern_layout_map, tiles_paper, selection_map, true, true)
+	
+	var combined_eraser: InstrumentCombined = InstrumentCombined.new(eraser_brush)
+	combined_eraser.set_instrument(KEY_SHIFT, eraser_line)
+	combined_eraser.set_instrument(KEY_CONTROL | KEY_SHIFT, eraser_rectangle)
+	combined_eraser.set_instrument(KEY_ALT | KEY_SHIFT, eraser_bucket_fill)
+	
+	__alternate_instrument = combined_eraser
+	__add_palette(TilesPalette.new(selection_paper, tiles_paper, combined_eraser))
 	__add_palette(AutotilesPalette.new(selection_paper, autotiles_paper, terrains_paper))
 	__palettes_option_button.connect("item_selected", self, "__on_palettes_option_button_item_selected")
 

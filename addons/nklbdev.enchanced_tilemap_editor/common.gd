@@ -135,6 +135,7 @@ class Settings:
 	var grid_fragment_radius: int
 	var pattern_grid_fragment_radius: int
 	var drawing_area_limit: int
+	var palette_zoom_step_factor: float
 	
 	signal settings_changed
 	
@@ -155,6 +156,7 @@ class Settings:
 		__register_project_setting("pattern_grid_fragment_radius", "pattern_grid_fragment_radius", TYPE_INT, 10)
 		__register_project_setting("axis_fragment_radius", "axis_fragment_radius", TYPE_INT, 20)
 		__register_project_setting("drawing_area_limit", "drawing_area_limit", TYPE_INT, 128 * 128)
+		__register_project_setting("palette_zoom_step_factor", "palette_zoom_step_factor", TYPE_REAL, 1.25)
 		ProjectSettings.connect("project_settings_changed", self, "__rescan_project_settings")
 		editor_settings.connect("settings_changed", self, "__rescan_editor_settings")
 		__scan_editor_settings()
@@ -421,11 +423,8 @@ static func get_icon(icon_name: String) -> Texture:
 	return resize_texture(load(get_icon_file_path(icon_name)), __STATICS[Statics.EDITOR_SCALE] / 4)
 
 static func has_icon(icon_name: String) -> bool:
-	print(icon_name)
 	var path = get_icon_file_path(icon_name)
-	print(path)
 	var res = ResourceLoader.exists(get_icon_file_path(icon_name))
-	print(res)
 	return res
 
 static func resize_texture(texture: Texture, scale: float) -> Texture:

@@ -55,7 +55,7 @@ func _init(selection_paper: Selection, tiles_paper: Paper, eraser: Instrument).(
 	combined_brush_instrument.set_instrument(KEY_SHIFT, instrument_line)
 	combined_brush_instrument.set_instrument(KEY_CONTROL | KEY_SHIFT, instrument_rectangle)
 	combined_brush_instrument.set_instrument(KEY_ALT | KEY_SHIFT, instrument_bucket_fill)
-	__brush_instrument_tool_button = toolbar.create_instrument_button("Brush\nShift+LMB: Line\nShift+Ctrl+LMB: Rectangle", KEY_B, "brush", combined_brush_instrument)
+	__brush_instrument_tool_button = toolbar.create_instrument_button("Brush\nShift+LMB: Line\nShift+Ctrl+LMB: Rectangle\nShift+Alt+LMB: Fill", KEY_B, "brush", combined_brush_instrument)
 	__single_painting_instruments = [instrument_brush, instrument_line, instrument_rectangle, instrument_bucket_fill]
 	
 	var tb = TB.tree(self)
@@ -68,7 +68,7 @@ func _init(selection_paper: Selection, tiles_paper: Paper, eraser: Instrument).(
 		tb.node(toolbar.create_instrument_button("Rectangle", KEY_R, "rectangle", instrument_rectangle)),
 		tb.node(toolbar.create_instrument_button("Fill", KEY_F, "bucket", instrument_bucket_fill)),
 		tb.node(toolbar.create_instrument_button("Picker", KEY_I, "picker", InstrumentPicker.new(tiles_paper, __paint_pattern_layout_map, selection_map))),
-		tb.node(toolbar.create_instrument_button("Eraser", KEY_E, "eraser", eraser)),
+		tb.node(toolbar.create_instrument_button("Eraser\nShift+LMB: Line\nShift+Ctrl+LMB: Rectangle\nShift+Alt+LMB: Fill\nAnd this tool with all the modifiers\nis always available on RMB", KEY_E, "eraser", eraser)),
 		tb.node(VSeparator.new()),
 		tb.node(ToolButton.new(), "__place_random_tile_button").with_props({
 			focus_mode = Control.FOCUS_NONE,
