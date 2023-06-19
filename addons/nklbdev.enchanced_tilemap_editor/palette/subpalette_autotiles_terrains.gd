@@ -136,18 +136,18 @@ class Terrain:
 		
 		var new_terrainmask_match = subtile.terrainmask.count(index)
 		if not icon_subtile:
-			print("a terrain \"%s\" set icon subtile: %s with match: %s" % [name, subtile, new_terrainmask_match])
+#			print("a terrain \"%s\" set icon subtile: %s with match: %s" % [name, subtile, new_terrainmask_match])
 			icon_subtile = subtile
 			return
 		var icon_terrainmask_match = icon_subtile.terrainmask.count(index)
-		print("b terrain \"%s\" icon_terrainmask_match: %s, new_terrainmask_match: %s" % [name, icon_terrainmask_match, new_terrainmask_match])
+#		print("b terrain \"%s\" icon_terrainmask_match: %s, new_terrainmask_match: %s" % [name, icon_terrainmask_match, new_terrainmask_match])
 		if new_terrainmask_match > icon_terrainmask_match:
-			print("b terrain \"%s\" set icon subtile: %s with match: %s" % [name, subtile, new_terrainmask_match])
+#			print("b terrain \"%s\" set icon subtile: %s with match: %s" % [name, subtile, new_terrainmask_match])
 			icon_subtile = subtile
 			return
 		if new_terrainmask_match == icon_terrainmask_match and \
 			subtile.priority > icon_subtile.priority:
-			print("c terrain \"%s\" set icon subtile: %s with match: %s" % [name, subtile, new_terrainmask_match])
+#			print("c terrain \"%s\" set icon subtile: %s with match: %s" % [name, subtile, new_terrainmask_match])
 			icon_subtile = subtile
 
 
@@ -256,7 +256,7 @@ func __parse_terrain_names(tile_name: String) -> PoolStringArray:
 		terrain_names
 
 func __register_terrain(terrain_name: String) -> int:
-	print("__register_terrain %s" % terrain_name)
+#	print("__register_terrain %s" % terrain_name)
 	var terrain = __terrains_by_name.get(terrain_name)
 	if terrain == null:
 		terrain = Terrain.new(__terrains.size(), terrain_name)
