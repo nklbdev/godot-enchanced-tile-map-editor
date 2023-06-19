@@ -213,7 +213,9 @@ func can_paint_at(map_cell: Vector2) -> bool:
 
 func paint_pattern_at(pattern_grid_cell: Vector2) -> void:
 	if _pattern_layout_map.pattern_size == Vector2.ONE:
-		paint_pattern_cell_at(_pattern_grid_origin_map_cell + pattern_grid_cell)
+		var map_cell: Vector2 = _pattern_grid_origin_map_cell + pattern_grid_cell
+		if can_paint_at(map_cell):
+			paint_pattern_cell_at(map_cell)
 	else:
 		var pattern_offset_in_grid_cell: Vector2 = _pattern_layout_map.map_to_world(pattern_grid_cell) - pattern_grid_cell
 		var pattern_position: Vector2 = \
