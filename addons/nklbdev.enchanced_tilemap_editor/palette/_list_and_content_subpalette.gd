@@ -32,6 +32,9 @@ var _settings: Common.Settings = Common.get_static(Common.Statics.SETTINGS)
 
 func _init(title: String, icon_name: String).(title, icon_name) -> void:
 	EDSCALE = Common.get_static(Common.Statics.EDITOR_SCALE)
+	var zoom_step_factor: float = _settings.palette_zoom_step_factor
+	if zoom_step_factor == 0:
+		zoom_step_factor = 1.25 # default value
 	var tb = TreeBuilder.tree(self)
 
 	tb.node(self).with_children([
@@ -69,7 +72,7 @@ func _init(title: String, icon_name: String).(title, icon_name) -> void:
 									hint_tooltip = "Zoom Out",
 									focus_mode = FOCUS_NONE,
 									shortcut = Common.create_shortcut(KEY_MASK_CMD | KEY_MINUS),
-								}).connected("pressed", "__zoom_content", [_settings.palette_zoom_step_factor]),
+								}).connected("pressed", "__zoom_content", [zoom_step_factor]),
 								tb.node(ToolButton.new(), "__zoom_reset_button").with_props({
 									hint_tooltip = "Zoom Reset",
 									focus_mode = FOCUS_NONE,
@@ -82,7 +85,7 @@ func _init(title: String, icon_name: String).(title, icon_name) -> void:
 									hint_tooltip = "Zoom In",
 									focus_mode = FOCUS_NONE,
 									shortcut = Common.create_shortcut(KEY_MASK_CMD | KEY_PLUS),
-								}).connected("pressed", "__zoom_content", [1 / _settings.palette_zoom_step_factor]),
+								}).connected("pressed", "__zoom_content", [1 / zoom_step_factor]),
 							]),
 						tb.node(ToolButton.new(), "__center_view_button").with_props({
 							icon = Common.get_icon("center_view"),
@@ -216,6 +219,9 @@ func __set_content_zoom(zoom: float, origin: Vector2 = __get_content_panel_cente
 var __warping: bool
 var __content_dragging_button: int
 func __on_content_panel_gui_input(event: InputEvent) -> void:
+	var zoom_step_factor: float = _settings.palette_zoom_step_factor
+	if zoom_step_factor == 0:
+		zoom_step_factor = 1.25 # default value
 	if _content == null:
 		return
 	if event is InputEventMouse:
@@ -233,10 +239,10 @@ func __on_content_panel_gui_input(event: InputEvent) -> void:
 				else:
 					match event.button_index:
 						BUTTON_WHEEL_UP:
-							__zoom_content(_settings.palette_zoom_step_factor, event.position)
+							__zoom_content(zoom_step_factor, event.position)
 							return
 						BUTTON_WHEEL_DOWN:
-							__zoom_content(1 / _settings.palette_zoom_step_factor, event.position)
+							__zoom_content(1 / zoom_step_factor, event.position)
 							return
 		
 		elif event is InputEventMouseMotion:
